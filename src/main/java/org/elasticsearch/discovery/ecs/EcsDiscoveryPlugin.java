@@ -41,8 +41,6 @@ import java.util.Collection;
  */
 public class EcsDiscoveryPlugin extends Plugin {
   
-    // ClientConfiguration clinit has some classloader problems
-    // TODO: fix that
     static {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -51,11 +49,6 @@ public class EcsDiscoveryPlugin extends Plugin {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             @Override
             public Void run() {
-                try {
-                    Class.forName("com.amazonaws.ClientConfiguration");
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
                 return null;
             }
         });
