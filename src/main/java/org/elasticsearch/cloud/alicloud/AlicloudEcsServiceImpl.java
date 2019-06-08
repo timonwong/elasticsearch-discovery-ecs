@@ -77,18 +77,21 @@ public class AlicloudEcsServiceImpl extends AbstractLifecycleComponent<AlicloudE
             profile = DefaultProfile.getProfile(region, account, key);
         }
 
-        String endpoint = settings.get(CLOUD_ECS.ENDPOINT);
-        if (endpoint != null) {
-            logger.debug("using explicit ecs endpoint [{}]", endpoint);
-
+        if (settings.getAsBoolean(CLOUD_ECS.USE_VPC_ENDPOINT, true)) {
+            logger.debug("using vpc endpoint");
+            profile.enableUsingVpcEndpoint();
         }
+
         this.client = new DefaultAcsClient(profile);
 
         // Customize endpoint
         DefaultEndpointResolver endpointResolver = new DefaultEndpointResolver(client);
+        String endpoint = settings.get(CLOUD_ECS.ENDPOINT);
         if (endpoint != null) {
+            logger.debug("using explicit ecs endpoint [{}]", endpoint);
             endpointResolver.putEndpointEntry(region, "ecs", endpoint);
         }
+
         client.setEndpointResolver(endpointResolver);
         return this.client;
     }
