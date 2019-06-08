@@ -94,7 +94,7 @@ public class EcsUnicastHostsProvider extends AbstractComponent implements Unicas
         this.zoneIds = zonIds;
 
         if (logger.isDebugEnabled()) {
-            logger.debug("using host_type [{}], tags [{}], groups [{}] with any_group [{}], availability_zones [{}]", hostType, tags, groups, bindAnyGroup, zonIds);
+            logger.debug("using host_type [{}], tags [{}], groups [{}] with any_group [{}], zones [{}]", hostType, tags, groups, bindAnyGroup, zonIds);
         }
     }
 
@@ -168,15 +168,23 @@ public class EcsUnicastHostsProvider extends AbstractComponent implements Unicas
             String address = null;
             switch (hostType) {
                 case PRIVATE_IP:
-                    address = instance.getInnerIpAddress().get(0);
-                    break;
-                case PUBLIC_IP:
-                    final List<String> addresses = instance.getPublicIpAddress();
-                    if (addresses.size() > 0) {
-                        address = addresses.get(0);
+                    final DescribeInstancesResponse.Instance.VpcAttributes attrs = instance.getVpcAttributes();
+                    if (attrs == null) {
+                        logger.debug("filtering out instance {}, classic network is not supported", instance.getInstanceId());
+                        continue;
+                    }
+
+                    final List<String> addrList = attrs.getPrivateIpAddress();
+                    if (!addrList.isEmpty()) {
+                        address = addrList.get(0);
                     }
                     break;
+                case PUBLIC_IP:
+                    final DescribeInstancesResponse.Instance.EipAddress eipAddr = instance.getEipAddress();
+                    address = eipAddr.getIpAddress();
+                    break;
             }
+
             if (address != null) {
                 try {
                     // we only limit to 1 port per address, makes no sense to ping 100 ports
