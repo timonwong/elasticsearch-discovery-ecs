@@ -5,33 +5,38 @@
         <format>zip</format>
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
+
+    <files>
+        <file>
+            <source>${project.basedir}/src/main/resources/plugin-descriptor.properties</source>
+            <outputDirectory/>
+            <filtered>true</filtered>
+        </file>
+        <file>
+            <source>${project.basedir}/src/main/resources/plugin-security.policy</source>
+            <outputDirectory/>
+            <filtered>true</filtered>
+        </file>
+    </files>
+
     <dependencySets>
         <dependencySet>
-            <outputDirectory>/elasticsearch-discovery-ecs</outputDirectory>
+            <outputDirectory/>
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <excludes>
                 <exclude>org.elasticsearch:elasticsearch</exclude>
             </excludes>
         </dependencySet>
+        <!--
+        <dependencySet>
+            <outputDirectory/>
+            <useProjectArtifact>true</useProjectArtifact>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <includes>
+                <include>org.apache.httpcomponents:httpclient</include>
+            </includes>
+        </dependencySet>
+        -->
     </dependencySets>
-    <fileSets>
-        <fileSet>
-            <directory>src/main/resources</directory>
-            <outputDirectory>/elasticsearch-discovery-ecs</outputDirectory>
-            <includes>
-                <include>plugin-security.policy</include>
-                <include>plugin-descriptor.properties</include>
-                <include>log4j2.properties</include>
-                <include>log4j.xml</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>lib</directory>
-            <outputDirectory>/elasticsearch</outputDirectory>
-            <includes>
-                <include>*.jar</include>
-            </includes>
-        </fileSet>
-    </fileSets>
 </assembly>
