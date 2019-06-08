@@ -1,18 +1,30 @@
 # Aliyun ECS Discovery Plugin for Elasticsearch
 
+The Aliyun ECS Discovery plugin uses the ECS API for unicast discovery. (Similar to the official cloud-aws plugin)
+
 ## Versions
 
 Plugin version | ES version
 ---------------|------------
 2.3.4 | 2.3.4
 
-## Install
+## Installation
 
 Option 1: Download or compile:
 
 Option 2: Use elasticsearch plugin program:
 
-Once plugin installed, elasticsearch restart is required.
+The plugin must be installed on every node in the cluster, and each node must be restarted after installation.
+
+## Removal
+
+The plugin can be removed with the following command:
+
+```bash
+sudo bin/plugin remove elasticsearch-discovery-ecs
+```
+
+The node must be stopped before removing the plugin.
 
 ## Configuration
 
