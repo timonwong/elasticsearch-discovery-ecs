@@ -29,7 +29,7 @@ public interface AlicloudEcsService extends LifecycleComponent<AlicloudEcsServic
         public static final String SECRET = "cloud.alicloud.ecs.secret_key";
         public static final String REGION = "cloud.alicloud.ecs.region";
         public static final String ENDPOINT = "cloud.alicloud.ecs.endpoint";
-        public static final String USE_VPC_ENDPOINT = "cloud.alicloud.ecs.use_vpc_endpoint";
+        public static final String USE_VPC_ENDPOINT = " ";
     }
 
     final class DISCOVERY_ECS {
@@ -37,7 +37,7 @@ public interface AlicloudEcsService extends LifecycleComponent<AlicloudEcsServic
         public static final String ANY_GROUP = "discovery.ecs.any_group";
         public static final String GROUPS = "discovery.ecs.groups";
         public static final String TAG_PREFIX = "discovery.ecs.tag.";
-        public static final String ZONE_IDS = "discovery.ecs.zone-ids";
+        public static final String ZONE_IDS = "discovery.ecs.zone_ids";
         public static final String NODE_CACHE_TIME = "discovery.ecs.node_cache_time";
     }
 
