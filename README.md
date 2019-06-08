@@ -6,13 +6,21 @@ The Aliyun ECS Discovery plugin uses the ECS API for unicast discovery. (Similar
 
 Plugin version | ES version
 ---------------|------------
-2.3.4 | 2.3.4
+2.3.4 | 2.3.x
+
+## Build
+
+```bash
+mvn package -P release
+```
 
 ## Installation
 
-Option 1: Download or compile:
+On Elasticsearch v2.3.x:
 
-Option 2: Use elasticsearch plugin program:
+```bash
+sudo bin/plugin install -b https://github.com/timonwong/elasticsearch-discovery-ecs/releases/download/v2.3.4/elasticsearch-discovery-ecs-2.3.4.zip
+```
 
 The plugin must be installed on every node in the cluster, and each node must be restarted after installation.
 
