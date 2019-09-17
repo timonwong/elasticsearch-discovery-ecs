@@ -38,8 +38,6 @@ The node must be stopped before removing the plugin.
 
 ### Authentication
 
-These can be overridden by, in increasing order of precedence, system properties aws.accessKeyId and aws.secretKey, environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_KEY, or the elasticsearch config using cloud.aws.access_key and cloud.aws.secret_key:
-
 RAM instance profile:
 
 ```yaml
@@ -118,7 +116,7 @@ The following are a list of settings (prefixed with `discovery.ecs`) that can fu
 - `host_type`: The type of host type to use to communicate with other instances. Can be one of `private_ip`, `public_ip`. Defaults to `private_ip`.
 - `zone_ids`: Either a comma separated list or array based list of zones. Only instances within the provided availability zones will be used in the cluster discovery.
 - `any_group`: If set to `false`, will require all security groups to be present for the instance to be used for the discovery. Defaults to `true`.
-- `node_cache_time`: How long the list of hosts is cached to prevent further requests to the AWS API. Defaults to `10s`.
+- `node_cache_time`: How long the list of hosts is cached to prevent further requests to the ECS API. Defaults to `10s`.
 
 ### ECS Network host
 
@@ -142,7 +140,7 @@ One practical use for tag filtering is when an ecs cluster contains many nodes t
 
 ### Automatic Node Attributes
 
-Though not dependent on actually using ecs as discovery (but still requires the cloud aws plugin installed), the plugin can automatically add node attributes relating to ecs (for example, availability zone, that can be used with the awareness allocation feature).
+Though not dependent on actually using ecs as discovery (but still requires the cloud ecs plugin installed), the plugin can automatically add node attributes relating to ecs (for example, availability zone, that can be used with the awareness allocation feature).
 In order to enable it, set `cloud.node.auto_attributes` to `true` in the settings:
 
 ```yaml
