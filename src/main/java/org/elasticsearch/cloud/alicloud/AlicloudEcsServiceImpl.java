@@ -21,13 +21,17 @@ package org.elasticsearch.cloud.alicloud;
 
 import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.IAcsClient;
+import com.aliyuncs.auth.AlibabaCloudCredentialsProvider;
+import com.aliyuncs.auth.BasicCredentials;
 import com.aliyuncs.auth.InstanceProfileCredentialsProvider;
+import com.aliyuncs.auth.StaticCredentialsProvider;
 import com.aliyuncs.endpoint.DefaultEndpointResolver;
 import com.aliyuncs.profile.DefaultProfile;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.cloud.alicloud.network.EcsNameResolver;
 import org.elasticsearch.cloud.alicloud.node.EcsCustomNodeAttributes;
 import org.elasticsearch.cluster.node.DiscoveryNodeService;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.network.NetworkService;
@@ -38,8 +42,6 @@ import org.elasticsearch.common.settings.SettingsFilter;
  *
  */
 public class AlicloudEcsServiceImpl extends AbstractLifecycleComponent<AlicloudEcsService> implements AlicloudEcsService {
-
-    public static final String ECS_METADATA_URL = "http://100.100.100.200/latest/meta-data/";
 
     private DefaultAcsClient client;
 
@@ -63,24 +65,27 @@ public class AlicloudEcsServiceImpl extends AbstractLifecycleComponent<AlicloudE
             region = region.toLowerCase();
         }
 
-        DefaultProfile profile;
-        if (settings.get(CLOUD_ECS.INSTANCE_ROLE) != null) {
-            String role = settings.get(CLOUD_ECS.INSTANCE_ROLE);
-            logger.debug("using instance role [{}]", role);
-
-            profile = DefaultProfile.getProfile(region);
-            profile.setCredentialsProvider(new InstanceProfileCredentialsProvider(role));
-        } else {
-            String account = settings.get(CLOUD_ECS.KEY);
-            String key = settings.get(CLOUD_ECS.SECRET);
-
-            profile = DefaultProfile.getProfile(region, account, key);
-        }
-
+        DefaultProfile profile = DefaultProfile.getProfile(region);
         if (settings.getAsBoolean(CLOUD_ECS.USE_VPC_ENDPOINT, true)) {
             logger.debug("using vpc endpoint");
             profile.enableUsingVpcEndpoint();
         }
+
+        AlibabaCloudCredentialsProvider provider;
+        String account = settings.get(CLOUD_ECS.KEY);
+        String key = settings.get(CLOUD_ECS.SECRET);
+
+        if (!Strings.isNullOrEmpty(account) && !Strings.isNullOrEmpty(key)) {
+            provider = new StaticCredentialsProvider(new BasicCredentials(account, key));
+        } else {
+            String role = settings.get(CLOUD_ECS.INSTANCE_ROLE, EcsMetadataUtils.findRamProfile());
+            if (role == null) {
+                throw new NullPointerException("instance profile cannot be null");
+            }
+            logger.debug("using instance role [{}]", role);
+            provider = new InstanceProfileCredentialsProvider(role);
+        }
+        profile.setCredentialsProvider(provider);
 
         client = new DefaultAcsClient(profile);
 
@@ -93,7 +98,7 @@ public class AlicloudEcsServiceImpl extends AbstractLifecycleComponent<AlicloudE
         }
 
         client.setEndpointResolver(endpointResolver);
-        return this.client;
+        return client;
     }
 
     @Override

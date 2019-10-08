@@ -38,17 +38,18 @@ The node must be stopped before removing the plugin.
 
 ### Authentication
 
-RAM instance profile:
-
-```yaml
-cloud.alicloud.ecs.instance_role: instance-role # REQUIRED: RAM instance role
-```
-
 Access key & secret access key:
 
 ```yaml
 cloud.alicloud.ecs.access_key: YOUR_ACCESS_KEY
 cloud.alicloud.ecs.secret_key: YOUR_SECRET_KEY
+```
+
+RAM instance profile:
+
+```yaml
+# Optional, this plugin will automatically detect it if missing
+cloud.alicloud.ecs.instance_role: instance-role
 ```
 
 #### Recommended ECS permissions

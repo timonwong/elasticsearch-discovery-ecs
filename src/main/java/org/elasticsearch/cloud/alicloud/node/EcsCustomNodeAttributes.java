@@ -19,23 +19,17 @@
 
 package org.elasticsearch.cloud.alicloud.node;
 
-import org.apache.lucene.util.IOUtils;
-import org.elasticsearch.cloud.alicloud.AlicloudEcsServiceImpl;
+import org.elasticsearch.cloud.alicloud.EcsMetadataUtils;
 import org.elasticsearch.cluster.node.DiscoveryNodeService;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
+ *
  */
 public class EcsCustomNodeAttributes extends AbstractComponent implements DiscoveryNodeService.CustomAttributesProvider {
 
@@ -50,26 +44,16 @@ public class EcsCustomNodeAttributes extends AbstractComponent implements Discov
         }
         Map<String, String> ecsAttributes = new HashMap<>();
 
-        URLConnection urlConnection;
-        InputStream in = null;
         try {
-            URL url = new URL(AlicloudEcsServiceImpl.ECS_METADATA_URL + "zone-id");
-            logger.debug("obtaining ecs [zone-id] from ecs meta-data url {}", url);
-            urlConnection = url.openConnection();
-            urlConnection.setConnectTimeout(2000);
-            in = urlConnection.getInputStream();
-            BufferedReader urlReader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-
-            String metadataResult = urlReader.readLine();
-            if (metadataResult == null || metadataResult.length() == 0) {
-                logger.error("no ecs metadata returned from {}", url);
+            logger.debug("obtaining ecs [zone-id] from ecs meta-data url");
+            String zoneId = EcsMetadataUtils.getZoneId();
+            if (zoneId == null || zoneId.length() == 0) {
+                logger.error("no ecs metadata returned");
                 return null;
             }
-            ecsAttributes.put("alicloud_zone_id", metadataResult);
+            ecsAttributes.put("alicloud_zone_id", zoneId);
         } catch (IOException e) {
-            logger.debug("failed to get metadata for [placement/availability-zone]", e);
-        } finally {
-            IOUtils.closeWhileHandlingException(in);
+            logger.debug("failed to get ecs metadata for [zone-id]", e);
         }
 
         return ecsAttributes;
