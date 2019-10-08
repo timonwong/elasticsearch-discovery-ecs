@@ -19,20 +19,13 @@
 
 package org.elasticsearch.cloud.alicloud.network;
 
-import org.apache.lucene.util.IOUtils;
-import org.elasticsearch.cloud.alicloud.AlicloudEcsServiceImpl;
+import org.elasticsearch.cloud.alicloud.EcsMetadataUtils;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.network.NetworkService.CustomNameResolver;
 import org.elasticsearch.common.settings.Settings;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 
 /**
  * <p>
@@ -78,6 +71,7 @@ public class EcsNameResolver extends AbstractComponent implements CustomNameReso
 
     /**
      * Construct a {@link CustomNameResolver}.
+     *
      * @param settings The global settings
      */
     public EcsNameResolver(Settings settings) {
@@ -91,33 +85,22 @@ public class EcsNameResolver extends AbstractComponent implements CustomNameReso
      * @see CustomNameResolver#resolveIfPossible(String)
      */
     public InetAddress[] resolve(EcsHostnameType type) throws IOException {
-        InputStream in = null;
-        String metadataUrl = AlicloudEcsServiceImpl.ECS_METADATA_URL + type.ecsName;
         try {
-            URL url = new URL(metadataUrl);
-            logger.debug("obtaining ecs hostname from ecs meta-data url {}", url);
-            URLConnection urlConnection = url.openConnection();
-            urlConnection.setConnectTimeout(2000);
-            in = urlConnection.getInputStream();
-            BufferedReader urlReader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-
-            String metadataResult = urlReader.readLine();
-            if (metadataResult == null || metadataResult.length() == 0) {
-                throw new IOException("no gce metadata returned from [" + url + "] for [" + type.configName + "]");
+            logger.debug("obtaining ecs hostname from ecs meta-data {}", type.ecsName);
+            String addr = EcsMetadataUtils.getMetadata(type.ecsName);
+            if (addr == null || addr.length() == 0) {
+                throw new IOException("no ecs metadata returned from [" + type.ecsName + "] for [" + type.configName + "]");
             }
             // only one address: because we explicitly ask for only one via the EcsHostnameType
-            return new InetAddress[] { InetAddress.getByName(metadataResult) };
+            return new InetAddress[]{InetAddress.getByName(addr)};
         } catch (IOException e) {
-            throw new IOException("IOException caught when fetching InetAddress from [" + metadataUrl + "]", e);
-        } finally {
-            IOUtils.closeWhileHandlingException(in);
+            throw new IOException("IOException caught when fetching InetAddress from [" + type.ecsName + "]", e);
         }
     }
 
     @Override
     public InetAddress[] resolveDefault() {
         return null; // using this, one has to explicitly specify _ecs_ in network setting
-//        return resolve(EcsHostnameType.DEFAULT, false);
     }
 
     @Override
