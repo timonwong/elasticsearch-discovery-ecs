@@ -1,3 +1,10 @@
 grant {
-  permission java.net.SocketPermission "*", "connect,resolve";
+    permission java.net.SocketPermission "*", "connect,resolve";
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.RuntimePermission "getClassLoader";
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+    permission java.net.NetPermission "getProxySelector";
+
+    // special permission for aliyun client. eg. "sun.net.http.allowRestrictedHeaders" requires "write" access.
+    permission java.util.PropertyPermission "*", "read,write";
 };

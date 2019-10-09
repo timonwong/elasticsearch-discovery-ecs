@@ -19,41 +19,32 @@
 
 package org.elasticsearch.discovery.ecs;
 
-import com.aliyuncs.IAcsClient;
 import com.aliyuncs.ecs.model.v20140526.DescribeInstancesRequest;
 import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
 import com.aliyuncs.exceptions.ClientException;
-import org.elasticsearch.Version;
-import org.elasticsearch.cloud.alicloud.AlicloudEcsService;
-import org.elasticsearch.cloud.alicloud.AlicloudEcsService.DISCOVERY_ECS;
-import org.elasticsearch.cluster.node.DiscoveryNode;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.component.AbstractComponent;
-import org.elasticsearch.common.inject.Inject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.SingleObjectCache;
-import org.elasticsearch.discovery.zen.ping.unicast.UnicastHostsProvider;
+import org.elasticsearch.discovery.zen.UnicastHostsProvider;
 import org.elasticsearch.transport.TransportService;
 
 import java.util.*;
 
+import static org.elasticsearch.discovery.ecs.AliyunEcsService.HostType.*;
+
 /**
  *
  */
-public class EcsUnicastHostsProvider extends AbstractComponent implements UnicastHostsProvider {
+public class AliyunEcsUnicastHostsProvider implements UnicastHostsProvider {
 
-    private enum HostType {
-        PRIVATE_IP,
-        PUBLIC_IP,
-    }
+    private static final Logger logger = LogManager.getLogger(AliyunEcsUnicastHostsProvider.class);
 
     private final TransportService transportService;
 
-    private final IAcsClient client;
-
-    private final Version version;
+    private final AliyunEcsService ecsService;
 
     private final boolean bindAnyGroup;
 
@@ -63,66 +54,58 @@ public class EcsUnicastHostsProvider extends AbstractComponent implements Unicas
 
     private final Set<String> zoneIds;
 
-    private final HostType hostType;
+    private final String hostType;
 
-    private final DiscoNodesCache discoNodes;
+    private final TransportAddressesCache dynamicHosts;
 
-    @Inject
-    public EcsUnicastHostsProvider(Settings settings, TransportService transportService, AlicloudEcsService alicloudEcsService, Version version) {
-        super(settings);
+
+    public AliyunEcsUnicastHostsProvider(Settings settings, TransportService transportService, AliyunEcsService ecsService) {
         this.transportService = transportService;
-        this.client = alicloudEcsService.client();
-        this.version = version;
+        this.ecsService = ecsService;
 
-        this.hostType = HostType.valueOf(settings.get(DISCOVERY_ECS.HOST_TYPE, "private_ip")
-                .toUpperCase(Locale.ROOT));
+        this.hostType = AliyunEcsService.HOST_TYPE_SETTING.get(settings);
+        this.dynamicHosts = new TransportAddressesCache(AliyunEcsService.NODE_CACHE_TIME_SETTING.get(settings));
 
-        this.discoNodes = new DiscoNodesCache(this.settings.getAsTime(DISCOVERY_ECS.NODE_CACHE_TIME,
-                TimeValue.timeValueMillis(10_000L)));
-
-        this.bindAnyGroup = settings.getAsBoolean(DISCOVERY_ECS.ANY_GROUP, true);
+        this.bindAnyGroup = AliyunEcsService.ANY_GROUP_SETTING.get(settings);
         this.groups = new HashSet<>();
-        groups.addAll(Arrays.asList(settings.getAsArray(DISCOVERY_ECS.GROUPS)));
+        this.groups.addAll(AliyunEcsService.GROUPS_SETTING.get(settings));
 
-        this.tags = settings.getByPrefix(DISCOVERY_ECS.TAG_PREFIX).getAsMap();
+        this.tags = AliyunEcsService.TAG_SETTING.getAsMap(settings);
 
-        Set<String> zonIds = new HashSet<>();
-        zonIds.addAll(Arrays.asList(settings.getAsArray(DISCOVERY_ECS.ZONE_IDS)));
-        if (settings.get(DISCOVERY_ECS.ZONE_IDS) != null) {
-            zonIds.addAll(Strings.commaDelimitedListToSet(settings.get(DISCOVERY_ECS.ZONE_IDS)));
-        }
-        this.zoneIds = zonIds;
+        this.zoneIds = new HashSet<>();
+        zoneIds.addAll(AliyunEcsService.ZONE_IDS_SETTING.get(settings));
 
         if (logger.isDebugEnabled()) {
-            logger.debug("using host_type [{}], tags [{}], groups [{}] with any_group [{}], zones [{}]", hostType, tags, groups, bindAnyGroup, zonIds);
+            logger.debug("using host_type [{}], tags [{}], groups [{}] with any_group [{}], availability_zones [{}]", hostType, tags,
+                groups, bindAnyGroup, zoneIds);
         }
     }
 
     @Override
-    public List<DiscoveryNode> buildDynamicNodes() {
-        return discoNodes.getOrRefresh();
+    public List<TransportAddress> buildDynamicHosts(HostsResolver hostsResolver) {
+        return dynamicHosts.getOrRefresh();
     }
 
-    protected List<DiscoveryNode> fetchDynamicNodes() {
-        List<DiscoveryNode> discoNodes = new ArrayList<>();
+    protected List<TransportAddress> fetchDynamicNodes() {
 
-        int nextPageNumber = 1;
+        final List<TransportAddress> dynamicHosts = new ArrayList<>();
+
         final List<DescribeInstancesResponse.Instance> instances = new ArrayList<>();
-        while (true) {
+        for (int pageNumber = 0; ; pageNumber++) {
             final DescribeInstancesResponse descInstances;
 
-            try {
+            try (AliyunEcsReference clientReference = ecsService.client()) {
                 // Query ECS API based on region, instance state, and tag.
 
                 // NOTE: we don't filter by security group during the describe instances request for two reasons:
                 // 1. differences in VPCs require different parameters during query (ID vs Name)
                 // 2. We want to use two different strategies: (all security groups vs. any security groups)
-
-                descInstances = client.getAcsResponse(buildDescribeInstancesRequest(nextPageNumber));
-            } catch (ClientException e) {
-                logger.info("Exception while retrieving instance list from AWS API: {}", e.getMessage());
+                final int currentPageNumber = pageNumber;
+                descInstances = SocketAccess.doPrivilegedClient(() -> clientReference.client().getAcsResponse(buildDescribeInstancesRequest(currentPageNumber)));
+            } catch (final ClientException e) {
+                logger.info("Exception while retrieving instance list from ECS API: {}", e.getMessage());
                 logger.debug("Full exception:", e);
-                return discoNodes;
+                return dynamicHosts;
             }
 
             final List<DescribeInstancesResponse.Instance> interInstances = descInstances.getInstances();
@@ -131,7 +114,6 @@ public class EcsUnicastHostsProvider extends AbstractComponent implements Unicas
             }
 
             instances.addAll(interInstances);
-            nextPageNumber++;
         }
 
         logger.trace("building dynamic unicast discovery nodes...");
@@ -147,7 +129,7 @@ public class EcsUnicastHostsProvider extends AbstractComponent implements Unicas
 
             // lets see if we can filter based on groups
             if (!groups.isEmpty()) {
-                List<String> instanceSecurityGroups = instance.getSecurityGroupIds();
+                final List<String> instanceSecurityGroups = instance.getSecurityGroupIds();
                 if (bindAnyGroup) {
                     // We check if we can find at least one group name or one group id in groups.
                     if (Collections.disjoint(instanceSecurityGroups, groups)) {
@@ -183,17 +165,32 @@ public class EcsUnicastHostsProvider extends AbstractComponent implements Unicas
                     final DescribeInstancesResponse.Instance.EipAddress eipAddr = instance.getEipAddress();
                     address = eipAddr.getIpAddress();
                     break;
+                case TAG_PREFIX:
+                    // Reading the node host from its metadata
+                    final String tagName = hostType.substring(TAG_PREFIX.length());
+                    logger.debug("reading hostname from [{}] instance tag", tagName);
+                    final List<DescribeInstancesResponse.Instance.Tag> tags = instance.getTags();
+                    for (final DescribeInstancesResponse.Instance.Tag tag : tags) {
+                        if (tag.getTagKey().equals(tagName)) {
+                            address = tag.getTagValue();
+                            logger.debug("using [{}] as the instance address");
+                            break;
+                        }
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException(hostType + " is unknown for discovery.ecs.host_type");
             }
 
             if (address != null) {
                 try {
                     // we only limit to 1 port per address, makes no sense to ping 100 ports
                     TransportAddress[] addresses = transportService.addressesFromString(address, 1);
-                    for (int i = 0; i < addresses.length; i++) {
-                        logger.trace("adding {}, address {}, transport_address {}", instance.getInstanceId(), address, addresses[i]);
-                        discoNodes.add(new DiscoveryNode("#cloud-" + instance.getInstanceId() + "-" + i, addresses[i], version.minimumCompatibilityVersion()));
+                    for (TransportAddress transportAddr : addresses) {
+                        logger.trace("adding {}, address {}, transport_address {}", instance.getInstanceId(), address, transportAddr);
+                        dynamicHosts.add(transportAddr);
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     logger.warn("failed ot add {}, address {}", e, instance.getInstanceId(), address);
                 }
             } else {
@@ -201,13 +198,12 @@ public class EcsUnicastHostsProvider extends AbstractComponent implements Unicas
             }
         }
 
-        logger.debug("using dynamic discovery nodes {}", discoNodes);
-
-        return discoNodes;
+        logger.debug("using dynamic transport addresses {}", dynamicHosts);
+        return dynamicHosts;
     }
 
-    private DescribeInstancesRequest buildDescribeInstancesRequest(final int pageNumber) {
-        DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
+    private DescribeInstancesRequest buildDescribeInstancesRequest(int pageNumber) {
+        final DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
         describeInstancesRequest.setStatus("Running");
         if (pageNumber > 1) {
             describeInstancesRequest.setPageNumber(pageNumber);
@@ -226,12 +222,12 @@ public class EcsUnicastHostsProvider extends AbstractComponent implements Unicas
         return describeInstancesRequest;
     }
 
-    private final class DiscoNodesCache extends SingleObjectCache<List<DiscoveryNode>> {
+    private final class TransportAddressesCache extends SingleObjectCache<List<TransportAddress>> {
 
         private boolean empty = true;
 
-        protected DiscoNodesCache(TimeValue refreshInterval) {
-            super(refreshInterval, new ArrayList<DiscoveryNode>());
+        protected TransportAddressesCache(TimeValue refreshInterval) {
+            super(refreshInterval, new ArrayList<>());
         }
 
         @Override
@@ -240,8 +236,8 @@ public class EcsUnicastHostsProvider extends AbstractComponent implements Unicas
         }
 
         @Override
-        protected List<DiscoveryNode> refresh() {
-            List<DiscoveryNode> nodes = fetchDynamicNodes();
+        protected List<TransportAddress> refresh() {
+            final List<TransportAddress> nodes = fetchDynamicNodes();
             empty = nodes.isEmpty();
             return nodes;
         }

@@ -17,12 +17,12 @@
  * under the License.
  */
 
-package org.elasticsearch.cloud.alicloud.network;
+package org.elasticsearch.discovery.ecs;
 
-import org.elasticsearch.cloud.alicloud.EcsMetadataUtils;
-import org.elasticsearch.common.component.AbstractComponent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.network.NetworkService.CustomNameResolver;
-import org.elasticsearch.common.settings.Settings;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -43,7 +43,9 @@ import java.net.InetAddress;
  *
  * @author Paul_Loy (keteracel)
  */
-public class EcsNameResolver extends AbstractComponent implements CustomNameResolver {
+public class EcsNameResolver implements CustomNameResolver {
+
+    private static final Logger logger = LogManager.getLogger(EcsNameResolver.class);
 
     /**
      * enum that can be added to over time with more meta-data types (such as ipv6 when this is available)
@@ -56,9 +58,9 @@ public class EcsNameResolver extends AbstractComponent implements CustomNameReso
         PUBLIC_IPv4("ecs:publicIpv4", "public-ipv4"),
 
         // some less verbose defaults
-        PUBLIC_IP("ecs:publicIp", PUBLIC_IPv4.ecsName),
-        PRIVATE_IP("ecs:privateIp", PRIVATE_IPv4.ecsName),
-        ECS("ecs", PRIVATE_IPv4.ecsName);
+        @SuppressWarnings("unused") PUBLIC_IP("ecs:publicIp", PUBLIC_IPv4.ecsName),
+        @SuppressWarnings("unused") PRIVATE_IP("ecs:privateIp", PRIVATE_IPv4.ecsName),
+        @SuppressWarnings("unused") ECS("ecs", PRIVATE_IPv4.ecsName);
 
         final String configName;
         final String ecsName;
@@ -70,24 +72,16 @@ public class EcsNameResolver extends AbstractComponent implements CustomNameReso
     }
 
     /**
-     * Construct a {@link CustomNameResolver}.
-     *
-     * @param settings The global settings
-     */
-    public EcsNameResolver(Settings settings) {
-        super(settings);
-    }
-
-    /**
      * @param type the ecs hostname type to discover.
      * @return the appropriate host resolved from ecs meta-data.
      * @throws IOException if ecs meta-data cannot be obtained.
      * @see CustomNameResolver#resolveIfPossible(String)
      */
-    public InetAddress[] resolve(EcsHostnameType type) throws IOException {
+    @SuppressForbidden(reason = "We call getInputStream in doPrivileged and provide SocketPermission")
+    public InetAddress[] resolve(final EcsHostnameType type) throws IOException {
         try {
             logger.debug("obtaining ecs hostname from ecs meta-data {}", type.ecsName);
-            String addr = EcsMetadataUtils.getMetadata(type.ecsName);
+            final String addr = SocketAccess.doPrivilegedIOException(() -> EcsMetadataUtils.getMetadata(type.ecsName));
             if (addr == null || addr.length() == 0) {
                 throw new IOException("no ecs metadata returned from [" + type.ecsName + "] for [" + type.configName + "]");
             }
