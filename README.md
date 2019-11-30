@@ -5,7 +5,7 @@ The Aliyun ECS Discovery plugin uses the ECS API to identify the addresses of se
 ## Versions
 
 
-Plugin version | ES version | Documentation 
+Plugin version | ES version | Documentation
 ---------------|------------| -------------
 2.3.4 | 2.3.x | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/2.x/README.md)
 6.8.5.0 | 6.8.5 | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/6.x/README.md)
@@ -19,10 +19,10 @@ mvn package -P release
 
 ## Installation
 
-On Elasticsearch v6.8.5:
+On Elasticsearch v7.4.2:
 
 ```bash
-sudo bin/elasticsearch-plugin install -b https://github.com/timonwong/elasticsearch-discovery-ecs/releases/download/v6.8.5.0/elasticsearch-discovery-ecs-6.8.5.0.zip
+sudo bin/elasticsearch-plugin install -b https://github.com/timonwong/elasticsearch-discovery-ecs/releases/download/v7.4.2.0/elasticsearch-discovery-ecs-7.4.2.0.zip
 ```
 
 The plugin must be installed on every node in the cluster, and each node must be restarted after installation.
@@ -39,7 +39,7 @@ The node must be stopped before removing the plugin.
 
 ## Configuration
 
-ECS discovery supports a number of settings. Some settings are sensitive and must be stored in the [elasticsearch keystore](https://www.elastic.co/guide/en/elasticsearch/reference/7.4/secure-settings.html). 
+ECS discovery supports a number of settings. Some settings are sensitive and must be stored in the [elasticsearch keystore](https://www.elastic.co/guide/en/elasticsearch/reference/7.4/secure-settings.html).
 For example, to use explicit Aliyun access keys:
 
 ```
@@ -168,7 +168,7 @@ cluster.routing.allocation.awareness.attributes: alicloud_zone_id
 network.bind_host:
   - _ecs:privateIpv4_
   - _local_
-network.publish_host: _ecs:privateIpv4_ 
+network.publish_host: _ecs:privateIpv4_
 
 
 # Use ecs to zen discovery
@@ -180,4 +180,4 @@ discovery.ecs.tag.ESCluster: test-cluster
 
 ## License
 
-This is a derived work from ECS Discovery Plugin. 
+This is a derived work from ECS Discovery Plugin.
