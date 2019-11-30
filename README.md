@@ -1,6 +1,6 @@
 # Aliyun ECS Discovery Plugin for Elasticsearch
 
-The Aliyun ECS Discovery plugin uses the ECS API for unicast discovery, similar to the official [EC2 Discovery Plugin](https://www.elastic.co/guide/en/elasticsearch/plugins/current/discovery-ec2.html).
+The Aliyun ECS Discovery plugin uses the ECS API to identify the addresses of seed hosts. similar to the official [EC2 Discovery Plugin](https://www.elastic.co/guide/en/elasticsearch/plugins/current/discovery-ec2.html).
 
 ## Versions
 
@@ -8,7 +8,8 @@ The Aliyun ECS Discovery plugin uses the ECS API for unicast discovery, similar 
 Plugin version | ES version | Documentation 
 ---------------|------------| -------------
 2.3.4 | 2.3.x | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/2.x/README.md)
-6.8.5.0 | 6.8.5 |
+6.8.5.0 | 6.8.5 | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/6.x/README.md)
+7.4.2.0 | 7.4.2 |
 
 ## Build
 
@@ -114,7 +115,7 @@ Here is a short list of available regions:
 ecs discovery allows to use the ECS APIs to perform automatic discovery (similar to multicast in non hostile multicast environments). Here is a simple sample configuration:
 
 ```yaml
-discovery.zen.hosts_provider: ecs
+discovery.seed_providers: ecs
 ```
 
 The following are a list of settings (prefixed with `discovery.ecs`) that can further control the discovery:
@@ -171,7 +172,7 @@ network.publish_host: _ecs:privateIpv4_
 
 
 # Use ecs to zen discovery
-discovery.zen.hosts_provider: ecs
+discovery.seed_providers: ecs
 discovery.ecs.host_type: private_ip
 # Seed hosts with tag "ESCluster=test-cluster"
 discovery.ecs.tag.ESCluster: test-cluster

@@ -22,8 +22,8 @@ package org.elasticsearch.discovery.ecs;
 import com.aliyuncs.auth.AlibabaCloudCredentials;
 import com.aliyuncs.auth.BasicCredentials;
 import com.aliyuncs.auth.BasicSessionCredentials;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.settings.*;
 import org.elasticsearch.common.settings.Setting.Property;
 

@@ -6,13 +6,14 @@
 
     <groupId>com.meiqia.es</groupId>
     <artifactId>elasticsearch-discovery-ecs</artifactId>
-    <version>6.8.5.0</version>
+    <version>7.4.2.0</version>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <java.version>8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
 
-        <elasticsearch.version>6.8.5</elasticsearch.version>
+        <elasticsearch.version>7.4.2</elasticsearch.version>
 
         <elasticsearch.assembly.descriptor>${project.basedir}/src/main/assemblies/plugin.xml</elasticsearch.assembly.descriptor>
         <elasticsearch.plugin.name>elasticsearch-discovery-ecs</elasticsearch.plugin.name>
