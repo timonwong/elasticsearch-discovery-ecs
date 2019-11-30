@@ -28,7 +28,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.SingleObjectCache;
-import org.elasticsearch.discovery.zen.UnicastHostsProvider;
+import org.elasticsearch.discovery.SeedHostsProvider;
 import org.elasticsearch.transport.TransportService;
 
 import java.util.*;
@@ -38,9 +38,9 @@ import static org.elasticsearch.discovery.ecs.AliyunEcsService.HostType.*;
 /**
  *
  */
-public class AliyunEcsUnicastHostsProvider implements UnicastHostsProvider {
+public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
 
-    private static final Logger logger = LogManager.getLogger(AliyunEcsUnicastHostsProvider.class);
+    private static final Logger logger = LogManager.getLogger(AliyunEcsSeedHostsProvider.class);
 
     private final TransportService transportService;
 
@@ -59,7 +59,7 @@ public class AliyunEcsUnicastHostsProvider implements UnicastHostsProvider {
     private final TransportAddressesCache dynamicHosts;
 
 
-    public AliyunEcsUnicastHostsProvider(Settings settings, TransportService transportService, AliyunEcsService ecsService) {
+    public AliyunEcsSeedHostsProvider(Settings settings, TransportService transportService, AliyunEcsService ecsService) {
         this.transportService = transportService;
         this.ecsService = ecsService;
 
@@ -82,7 +82,7 @@ public class AliyunEcsUnicastHostsProvider implements UnicastHostsProvider {
     }
 
     @Override
-    public List<TransportAddress> buildDynamicHosts(HostsResolver hostsResolver) {
+    public List<TransportAddress> getSeedAddresses(HostsResolver hostsResolver) {
         return dynamicHosts.getOrRefresh();
     }
 
@@ -116,7 +116,7 @@ public class AliyunEcsUnicastHostsProvider implements UnicastHostsProvider {
             instances.addAll(interInstances);
         }
 
-        logger.trace("building dynamic unicast discovery nodes...");
+        logger.trace("finding seed nodes...");
         for (DescribeInstancesResponse.Instance instance : instances) {
             // first, filter based on region ids
             if (!zoneIds.isEmpty()) {
@@ -185,13 +185,13 @@ public class AliyunEcsUnicastHostsProvider implements UnicastHostsProvider {
             if (address != null) {
                 try {
                     // we only limit to 1 port per address, makes no sense to ping 100 ports
-                    TransportAddress[] addresses = transportService.addressesFromString(address, 1);
+                    TransportAddress[] addresses = transportService.addressesFromString(address);
                     for (TransportAddress transportAddr : addresses) {
                         logger.trace("adding {}, address {}, transport_address {}", instance.getInstanceId(), address, transportAddr);
                         dynamicHosts.add(transportAddr);
                     }
                 } catch (final Exception e) {
-                    logger.warn("failed ot add {}, address {}", e, instance.getInstanceId(), address);
+                    logger.warn("failed to add {}, address {}", e, instance.getInstanceId(), address);
                 }
             } else {
                 logger.trace("not adding {}, address is null, host_type {}", instance.getInstanceId(), hostType);
