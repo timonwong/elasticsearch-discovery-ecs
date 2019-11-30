@@ -18,10 +18,10 @@ mvn package -P release
 
 ## Installation
 
-On Elasticsearch v2.3.x:
+On Elasticsearch v6.8.5:
 
 ```bash
-sudo bin/plugin install -b https://github.com/timonwong/elasticsearch-discovery-ecs/releases/download/v2.3.4/elasticsearch-discovery-ecs-2.3.4.zip
+sudo bin/elasticsearch-plugin install -b https://github.com/timonwong/elasticsearch-discovery-ecs/releases/download/v6.8.5.0/elasticsearch-discovery-ecs-6.8.5.0.zip
 ```
 
 The plugin must be installed on every node in the cluster, and each node must be restarted after installation.
