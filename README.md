@@ -1,12 +1,14 @@
 # Aliyun ECS Discovery Plugin for Elasticsearch
 
-The Aliyun ECS Discovery plugin uses the ECS API for unicast discovery. (Similar to the official [Cloud AWS EC2 Discovery](https://www.elastic.co/guide/en/elasticsearch/plugins/2.3/cloud-aws-discovery.html) plugin)
+The Aliyun ECS Discovery plugin uses the ECS API for unicast discovery, similar to the official [EC2 Discovery Plugin](https://www.elastic.co/guide/en/elasticsearch/plugins/current/discovery-ec2.html).
 
 ## Versions
 
-Plugin version | ES version
----------------|------------
-2.3.4 | 2.3.x
+
+Plugin version | ES version | Documentation 
+---------------|------------| -------------
+2.3.4 | 2.3.x | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/2.x/README.md)
+6.8.5.0 | 6.8.5 |
 
 ## Build
 
@@ -38,19 +40,30 @@ The node must be stopped before removing the plugin.
 
 ### Authentication
 
+The authentication order:
+
+- Provided access & secret key
+- Provided STS token
+- Environment variables
+- Java properties
+- RAM Instance profile
+
 Access key & secret access key:
 
 ```yaml
-cloud.alicloud.ecs.access_key: YOUR_ACCESS_KEY
-cloud.alicloud.ecs.secret_key: YOUR_SECRET_KEY
+discovery.ecs.access_key: YOUR_ACCESS_KEY
+discovery.ecs.secret_key: YOUR_SECRET_KEY
 ```
 
-RAM instance profile:
+STS token:
 
 ```yaml
-# Optional, this plugin will automatically detect it if missing
-cloud.alicloud.ecs.instance_role: instance-role
+discovery.ecs.access_key: YOUR_ACCESS_KEY
+discovery.ecs.secret_key: YOUR_SECRET_KEY
+discovery.ecs.session_token: YOUR_SESSION_TOKEN
 ```
+
+Environment variables, RAM instance profile (automatically detected)
 
 #### Recommended ECS permissions
 
@@ -71,7 +84,7 @@ ECS discovery requires making a call to the ECS service. You’ll want to setup 
 
 ### Region
 
-`cloud.alicloud.ecs.region` should be set to the region which elasticsearch runs on.
+`discovery.ecs.region` should be set to the region which elasticsearch runs on.
 
 Here is a short list of available regions:
 
@@ -99,16 +112,12 @@ Here is a short list of available regions:
 
 **NOTE**: For a complete list of regions, please visit: https://www.alibabacloud.com/help/doc-detail/40654.htm
 
-### VPC Endpoint
-
-In order to use internal VPC endpoint for ECS API. The `cloud.alicloud.ecs.use_vpc_endpoint` defaults to `true`.
-
 ### ECS Discovery
 
 ecs discovery allows to use the ECS APIs to perform automatic discovery (similar to multicast in non hostile multicast environments). Here is a simple sample configuration:
 
 ```yaml
-discovery.type: ecs
+discovery.zen.hosts_provider: ecs
 ```
 
 The following are a list of settings (prefixed with `discovery.ecs`) that can further control the discovery:
@@ -147,3 +156,32 @@ In order to enable it, set `cloud.node.auto_attributes` to `true` in the setting
 ```yaml
 cloud.node.auto_attributes: true
 ```
+
+## Example Configuration
+
+```yaml
+discovery.ecs.region: cn-hangzhou
+discovery.ecs.access_key: YOUR_ACCESS_KEY
+discovery.ecs.secret_key: YOUR_SECRET_KEY
+
+# Automatically set node attribute `alicloud_zone_id`, which can be used to spread replica across availability zones.
+# For more information about allocation awareness: https://www.elastic.co/guide/en/elasticsearch/reference/6.8/allocation-awareness.html
+cloud.node.auto_attributes: true
+cluster.routing.allocation.awareness.attributes: alicloud_zone_id
+
+network.bind_host:
+  - _ecs:privateIpv4_
+  - _local_
+network.publish_host: _ecs:privateIpv4_ 
+
+
+# Use ecs to zen discovery
+discovery.zen.hosts_provider: ecs
+discovery.ecs.host_type: private_ip
+# Seed hosts with tag "ESCluster=test-cluster"
+discovery.ecs.tag.ESCluster: test-cluster
+```
+
+## License
+
+This is a derived work from ECS Discovery Plugin. 

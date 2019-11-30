@@ -6,19 +6,17 @@
 
     <groupId>com.meiqia.es</groupId>
     <artifactId>elasticsearch-discovery-ecs</artifactId>
-    <version>2.3.4</version>
+    <version>6.8.5.0</version>
 
     <properties>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
 
-        <elasticsearch.version>2.3.4</elasticsearch.version>
+        <elasticsearch.version>6.8.5</elasticsearch.version>
 
         <elasticsearch.assembly.descriptor>${project.basedir}/src/main/assemblies/plugin.xml</elasticsearch.assembly.descriptor>
         <elasticsearch.plugin.name>elasticsearch-discovery-ecs</elasticsearch.plugin.name>
         <elasticsearch.plugin.classname>org.elasticsearch.discovery.ecs.EcsDiscoveryPlugin</elasticsearch.plugin.classname>
-        <elasticsearch.plugin.jvm>true</elasticsearch.plugin.jvm>
-        <elasticsearch.plugin.isolated>true</elasticsearch.plugin.isolated>
 
         <tests.rest.load_packaged>false</tests.rest.load_packaged>
         <skip.unit.tests>true</skip.unit.tests>
