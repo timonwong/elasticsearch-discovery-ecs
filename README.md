@@ -38,6 +38,14 @@ The node must be stopped before removing the plugin.
 
 ## Configuration
 
+ECS discovery supports a number of settings. Some settings are sensitive and must be stored in the [elasticsearch keystore](https://www.elastic.co/guide/en/elasticsearch/reference/7.4/secure-settings.html). 
+For example, to use explicit Aliyun access keys:
+
+```
+bin/elasticsearch-keystore add discovery.ecs.access_key
+bin/elasticsearch-keystore add discovery.ecs.secret_key
+```
+
 ### Authentication
 
 The authentication order:
@@ -48,22 +56,11 @@ The authentication order:
 - Java properties
 - RAM Instance profile
 
-Access key & secret access key:
-
-```yaml
-discovery.ecs.access_key: YOUR_ACCESS_KEY
-discovery.ecs.secret_key: YOUR_SECRET_KEY
-```
-
-STS token:
-
-```yaml
-discovery.ecs.access_key: YOUR_ACCESS_KEY
-discovery.ecs.secret_key: YOUR_SECRET_KEY
-discovery.ecs.session_token: YOUR_SESSION_TOKEN
-```
-
 Environment variables, RAM instance profile (automatically detected)
+
+- discovery.ecs.access_key (Secure, reloadable)
+- discovery.ecs.secret_key (Secure, reloadable)
+- discovery.ecs.session_token (Secure, reloadable)
 
 #### Recommended ECS permissions
 
@@ -117,7 +114,7 @@ Here is a short list of available regions:
 ecs discovery allows to use the ECS APIs to perform automatic discovery (similar to multicast in non hostile multicast environments). Here is a simple sample configuration:
 
 ```yaml
-discovery.zen.hosts_provider: ecs
+discovery.seed_providers: ecs
 ```
 
 The following are a list of settings (prefixed with `discovery.ecs`) that can further control the discovery:
@@ -161,8 +158,6 @@ cloud.node.auto_attributes: true
 
 ```yaml
 discovery.ecs.region: cn-hangzhou
-discovery.ecs.access_key: YOUR_ACCESS_KEY
-discovery.ecs.secret_key: YOUR_SECRET_KEY
 
 # Automatically set node attribute `alicloud_zone_id`, which can be used to spread replica across availability zones.
 # For more information about allocation awareness: https://www.elastic.co/guide/en/elasticsearch/reference/6.8/allocation-awareness.html
@@ -176,7 +171,7 @@ network.publish_host: _ecs:privateIpv4_
 
 
 # Use ecs to zen discovery
-discovery.zen.hosts_provider: ecs
+discovery.seed_providers: ecs
 discovery.ecs.host_type: private_ip
 # Seed hosts with tag "ESCluster=test-cluster"
 discovery.ecs.tag.ESCluster: test-cluster
