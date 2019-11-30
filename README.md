@@ -114,7 +114,7 @@ Here is a short list of available regions:
 ecs discovery allows to use the ECS APIs to perform automatic discovery (similar to multicast in non hostile multicast environments). Here is a simple sample configuration:
 
 ```yaml
-discovery.seed_providers: ecs
+discovery.zen.hosts_provider: ecs
 ```
 
 The following are a list of settings (prefixed with `discovery.ecs`) that can further control the discovery:
@@ -171,7 +171,7 @@ network.publish_host: _ecs:privateIpv4_
 
 
 # Use ecs to zen discovery
-discovery.seed_providers: ecs
+discovery.zen.hosts_provider: ecs
 discovery.ecs.host_type: private_ip
 # Seed hosts with tag "ESCluster=test-cluster"
 discovery.ecs.tag.ESCluster: test-cluster
