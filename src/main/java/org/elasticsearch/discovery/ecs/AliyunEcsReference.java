@@ -48,6 +48,8 @@ public class AliyunEcsReference extends AbstractRefCounted implements Releasable
     /**
      * Returns the underlying `IAcsClient` client. All method calls are permitted BUT
      * NOT shutdown. Shutdown is called when reference count reaches 0.
+     *
+     * @return concrete client instance
      */
     public IAcsClient client() {
         return client;

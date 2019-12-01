@@ -57,8 +57,7 @@ public class AliyunEcsServiceImpl implements AliyunEcsService {
         return client;
     }
 
-
-    private AlibabaCloudCredentialsProvider buildCredentials(EcsClientSettings clientSettings) {
+    public static AlibabaCloudCredentialsProvider buildCredentials(EcsClientSettings clientSettings) {
         final AlibabaCloudCredentials credentials = clientSettings.credentials;
         if (credentials == null) {
             logger.debug("Using either environment variables, system properties or instance profile credentials");

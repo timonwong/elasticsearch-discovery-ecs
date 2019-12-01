@@ -33,11 +33,11 @@ import org.elasticsearch.transport.TransportService;
 
 import java.util.*;
 
-import static org.elasticsearch.discovery.ecs.AliyunEcsService.HostType.*;
+import static org.elasticsearch.discovery.ecs.AliyunEcsService.HostType.PRIVATE_IP;
+import static org.elasticsearch.discovery.ecs.AliyunEcsService.HostType.PUBLIC_IP;
+import static org.elasticsearch.discovery.ecs.AliyunEcsService.HostType.TAG_PREFIX;
 
-/**
- *
- */
+
 public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
 
     private static final Logger logger = LogManager.getLogger(AliyunEcsSeedHostsProvider.class);
