@@ -173,7 +173,7 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
                     for (final DescribeInstancesResponse.Instance.Tag tag : tags) {
                         if (tag.getTagKey().equals(tagName)) {
                             address = tag.getTagValue();
-                            logger.debug("using [{}] as the instance address");
+                            logger.debug("using [{}] as the instance address", address);
                             break;
                         }
                     }
@@ -191,7 +191,7 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
                         dynamicHosts.add(transportAddr);
                     }
                 } catch (final Exception e) {
-                    logger.warn("failed to add {}, address {}", e, instance.getInstanceId(), address);
+                    logger.warn("failed to add {}, address {}", instance.getInstanceId(), address);
                 }
             } else {
                 logger.trace("not adding {}, address is null, host_type {}", instance.getInstanceId(), hostType);

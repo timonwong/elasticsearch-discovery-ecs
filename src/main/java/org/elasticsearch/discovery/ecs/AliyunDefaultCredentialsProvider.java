@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AliyunDefaultCredentialsProvider implements AlibabaCloudCredentialsProvider {
-    private List<AlibabaCloudCredentialsProvider> defaultProviders = new ArrayList<>();
+    private final List<AlibabaCloudCredentialsProvider> defaultProviders = new ArrayList<>();
 
     @SuppressForbidden(reason = "We call getInputStream in doPrivileged and provide SocketPermission")
     public AliyunDefaultCredentialsProvider() {
