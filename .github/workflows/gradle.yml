@@ -35,3 +35,9 @@ jobs:
         run: |
           mkdir -p elasticsearch-discovery-ecs-builds
           cp -r ./build/distributions/*.zip elasticsearch-discovery-ecs-builds/
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: elasticsearch-discovery-ecs
+          path: elasticsearch-discovery-ecs-builds
