@@ -50,7 +50,7 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
 
     private final Set<String> groups;
 
-    private final Map<String, String> tags;
+    private final Map<String, List<String>> tags;
 
     private final Set<String> zoneIds;
 
@@ -91,7 +91,7 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
         final List<TransportAddress> dynamicHosts = new ArrayList<>();
 
         final List<DescribeInstancesResponse.Instance> instances = new ArrayList<>();
-        for (int pageNumber = 0; ; pageNumber++) {
+        for (int pageNumber = 1; ; pageNumber++) {
             final DescribeInstancesResponse descInstances;
 
             try (AliyunEcsReference clientReference = ecsService.client()) {
@@ -101,7 +101,8 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
                 // 1. differences in VPCs require different parameters during query (ID vs Name)
                 // 2. We want to use two different strategies: (all security groups vs. any security groups)
                 final int currentPageNumber = pageNumber;
-                descInstances = SocketAccess.doPrivilegedClient(() -> clientReference.client().getAcsResponse(buildDescribeInstancesRequest(currentPageNumber)));
+                descInstances = SocketAccess.doPrivilegedClient(() -> clientReference.client().getAcsResponse(
+                    buildDescribeInstancesRequest(currentPageNumber)));
             } catch (final ClientException e) {
                 logger.info("Exception while retrieving instance list from ECS API: {}", e.getMessage());
                 logger.debug("Full exception:", e);
@@ -148,38 +149,33 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
             }
 
             String address = null;
-            switch (hostType) {
-                case PRIVATE_IP:
-                    final DescribeInstancesResponse.Instance.VpcAttributes attrs = instance.getVpcAttributes();
-                    if (attrs == null) {
-                        logger.debug("filtering out instance {}, classic network is not supported", instance.getInstanceId());
-                        continue;
-                    }
+            if (hostType.equals(PRIVATE_IP)) {
+                final DescribeInstancesResponse.Instance.VpcAttributes attrs = instance.getVpcAttributes();
+                if (attrs == null) {
+                    logger.debug("filtering out instance {}, classic network is not supported", instance.getInstanceId());
+                    continue;
+                }
 
-                    final List<String> addrList = attrs.getPrivateIpAddress();
-                    if (!addrList.isEmpty()) {
-                        address = addrList.get(0);
+                final List<String> addrList = attrs.getPrivateIpAddress();
+                if (!addrList.isEmpty()) {
+                    address = addrList.get(0);
+                }
+            } else if (hostType.equals(PUBLIC_IP)) {
+                final DescribeInstancesResponse.Instance.EipAddress eipAddr = instance.getEipAddress();
+                address = eipAddr.getIpAddress();
+            } else if (hostType.startsWith(TAG_PREFIX)) {// Reading the node host from its metadata
+                final String tagName = hostType.substring(TAG_PREFIX.length());
+                logger.debug("reading hostname from [{}] instance tag", tagName);
+                final List<DescribeInstancesResponse.Instance.Tag> tags = instance.getTags();
+                for (final DescribeInstancesResponse.Instance.Tag tag : tags) {
+                    if (tag.getTagKey().equals(tagName)) {
+                        address = tag.getTagValue();
+                        logger.debug("using [{}] as the instance address", address);
+                        break;
                     }
-                    break;
-                case PUBLIC_IP:
-                    final DescribeInstancesResponse.Instance.EipAddress eipAddr = instance.getEipAddress();
-                    address = eipAddr.getIpAddress();
-                    break;
-                case TAG_PREFIX:
-                    // Reading the node host from its metadata
-                    final String tagName = hostType.substring(TAG_PREFIX.length());
-                    logger.debug("reading hostname from [{}] instance tag", tagName);
-                    final List<DescribeInstancesResponse.Instance.Tag> tags = instance.getTags();
-                    for (final DescribeInstancesResponse.Instance.Tag tag : tags) {
-                        if (tag.getTagKey().equals(tagName)) {
-                            address = tag.getTagValue();
-                            logger.debug("using [{}] as the instance address", address);
-                            break;
-                        }
-                    }
-                    break;
-                default:
-                    throw new IllegalArgumentException(hostType + " is unknown for discovery.ecs.host_type");
+                }
+            } else {
+                throw new IllegalArgumentException(hostType + " is unknown for discovery.ecs.host_type");
             }
 
             if (address != null) {
@@ -205,18 +201,19 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
     private DescribeInstancesRequest buildDescribeInstancesRequest(int pageNumber) {
         final DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
         describeInstancesRequest.setStatus("Running");
-        if (pageNumber > 1) {
-            describeInstancesRequest.setPageNumber(pageNumber);
-        }
+        describeInstancesRequest.setPageNumber(pageNumber);
         describeInstancesRequest.setPageSize(100);
 
         final List<DescribeInstancesRequest.Tag> filterTags = new ArrayList<>();
-        for (Map.Entry<String, String> tagFilter : tags.entrySet()) {
+        for (final Map.Entry<String, List<String>> tagFilter : tags.entrySet()) {
             // for a given tag key, OR relationship for multiple different values
-            final DescribeInstancesRequest.Tag tag = new DescribeInstancesRequest.Tag();
-            tag.setKey(tagFilter.getKey());
-            tag.setValue(tagFilter.getValue());
-            filterTags.add(tag);
+            final String tagKey = tagFilter.getKey();
+            for (final String tagValue : tagFilter.getValue()) {
+                final DescribeInstancesRequest.Tag tag = new DescribeInstancesRequest.Tag();
+                tag.setKey(tagKey);
+                tag.setValue(tagValue);
+                filterTags.add(tag);
+            }
         }
         describeInstancesRequest.setTags(filterTags);
         return describeInstancesRequest;

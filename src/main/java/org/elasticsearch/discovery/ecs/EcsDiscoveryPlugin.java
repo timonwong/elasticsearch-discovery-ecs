@@ -55,7 +55,8 @@ public class EcsDiscoveryPlugin extends Plugin implements DiscoveryPlugin, Reloa
     }
 
     private final Settings settings;
-    private final AliyunEcsService ecsService;
+    // protected for testing
+    protected final AliyunEcsService ecsService;
 
     public EcsDiscoveryPlugin(Settings settings) {
         this(settings, new AliyunEcsServiceImpl());
