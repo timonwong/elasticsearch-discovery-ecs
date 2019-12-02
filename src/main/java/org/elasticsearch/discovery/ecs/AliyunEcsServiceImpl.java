@@ -42,7 +42,8 @@ public class AliyunEcsServiceImpl implements AliyunEcsService {
     private final AtomicReference<LazyInitializable<AliyunEcsReference, ElasticsearchException>> lazyClientReference =
         new AtomicReference<>();
 
-    private IAcsClient buildClient(EcsClientSettings clientSettings) {
+    // pkg private for tests
+    protected IAcsClient buildClient(EcsClientSettings clientSettings) {
         final AlibabaCloudCredentialsProvider credentials = buildCredentials(clientSettings);
         final DefaultProfile profile = DefaultProfile.getProfile(clientSettings.region);
         profile.setCredentialsProvider(credentials);
@@ -57,7 +58,8 @@ public class AliyunEcsServiceImpl implements AliyunEcsService {
         return client;
     }
 
-    public static AlibabaCloudCredentialsProvider buildCredentials(EcsClientSettings clientSettings) {
+    // pkg private for tests
+    static AlibabaCloudCredentialsProvider buildCredentials(EcsClientSettings clientSettings) {
         final AlibabaCloudCredentials credentials = clientSettings.credentials;
         if (credentials == null) {
             logger.debug("Using either environment variables, system properties or instance profile credentials");

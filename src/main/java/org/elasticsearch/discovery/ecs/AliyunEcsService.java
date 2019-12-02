@@ -77,10 +77,14 @@ interface AliyunEcsService extends Closeable {
      * instances with a tag key set to stage, and a value of dev. Several tags set will require all of those tags to be set for the
      * instance to be included.
      */
-    Setting.AffixSetting<String> TAG_SETTING = Setting.prefixKeySetting("discovery.ecs.tag.",
-        key -> Setting.simpleString(key, Property.NodeScope));
+    Setting.AffixSetting<List<String>> TAG_SETTING = Setting.prefixKeySetting("discovery.ecs.tag.",
+        key -> Setting.listSetting(key, Collections.emptyList(), Function.identity(), Property.NodeScope));
 
-
+    /**
+     * Builds then caches an @{code IAcsClient} using the current client
+     * settings. Returns an {@code AliyunEcsReference} wrapper which should
+     * be released as soon as it is not required anymore.
+     */
     AliyunEcsReference client();
 
     /**

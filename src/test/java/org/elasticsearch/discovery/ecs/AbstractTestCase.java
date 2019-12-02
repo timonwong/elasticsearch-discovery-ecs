@@ -31,6 +31,7 @@ import org.elasticsearch.test.ESIntegTestCase;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Base class for Aliyun ECS tests that require credentials.
@@ -68,6 +69,6 @@ public abstract class AbstractTestCase extends ESIntegTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(EcsDiscoveryPlugin.class);
+        return Collections.singletonList(EcsDiscoveryPlugin.class);
     }
 }
