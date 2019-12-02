@@ -60,7 +60,7 @@ public class AliyunEcsServiceImplTests extends ESTestCase {
         assertThat(credentials, instanceOf(BasicSessionCredentials.class));
         assertThat(credentials.getAccessKeyId(), is("aliyun_access_key"));
         assertThat(credentials.getAccessKeySecret(), is("aliyun_secret"));
-        assertThat(((BasicSessionCredentials)credentials).getSessionToken(), is("aliyun_session_token"));
+        assertThat(((BasicSessionCredentials) credentials).getSessionToken(), is("aliyun_session_token"));
     }
 
     public void testRejectionOfLoneSessionToken() {

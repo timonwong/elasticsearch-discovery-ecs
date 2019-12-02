@@ -40,10 +40,10 @@ import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.function.BiConsumer;
-import static org.hamcrest.Matchers.arrayContaining;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.elasticsearch.discovery.ecs.EcsMetadataUtils.ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 
 /**
@@ -142,7 +142,7 @@ public class EcsNetworkTests extends ESTestCase {
         resolveEcs("_ecs:publicIpv4_", InetAddress.getByName("165.168.10.2"));
     }
 
-    private InetAddress[] resolveEcs(String host, InetAddress ... expected) throws IOException {
+    private InetAddress[] resolveEcs(String host, InetAddress... expected) throws IOException {
         Settings nodeSettings = Settings.builder()
             .put("network.host", host)
             .build();
@@ -165,6 +165,6 @@ public class EcsNetworkTests extends ESTestCase {
     public void testNetworkHostCoreLocal() throws IOException {
         NetworkService networkService = new NetworkService(Collections.singletonList(new EcsNameResolver()));
         InetAddress[] addresses = networkService.resolveBindHostAddresses(null);
-        assertThat(addresses, arrayContaining(networkService.resolveBindHostAddresses(new String[] { "_local_" })));
+        assertThat(addresses, arrayContaining(networkService.resolveBindHostAddresses(new String[]{"_local_"})));
     }
 }
