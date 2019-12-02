@@ -84,9 +84,9 @@ final class EcsClientSettings {
     }
 
     static AlibabaCloudCredentials loadCredentials(Settings settings) {
-        try (final SecureString key = ACCESS_KEY_SETTING.get(settings);
-             final SecureString secret = SECRET_KEY_SETTING.get(settings);
-             final SecureString sessionToken = SESSION_TOKEN_SETTING.get(settings)) {
+        try (SecureString key = ACCESS_KEY_SETTING.get(settings);
+             SecureString secret = SECRET_KEY_SETTING.get(settings);
+             SecureString sessionToken = SESSION_TOKEN_SETTING.get(settings)) {
             if (key.length() == 0 && secret.length() == 0) {
                 if (sessionToken.length() > 0) {
                     throw new SettingsException("Setting [{}] is set but [{}] and [{}] are not",
