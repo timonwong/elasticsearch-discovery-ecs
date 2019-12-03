@@ -39,7 +39,7 @@ public class AliyunEcsServiceImpl implements AliyunEcsService {
 
     private static final Logger logger = LogManager.getLogger(AliyunEcsServiceImpl.class);
 
-    private final AtomicReference<LazyInitializable<AliyunEcsReference, ElasticsearchException>> lazyClientReference =
+    private final AtomicReference<LazyInitializable<AcsClientReference, ElasticsearchException>> lazyClientReference =
         new AtomicReference<>();
 
     private IAcsClient buildClient(EcsClientSettings clientSettings) {
@@ -83,8 +83,8 @@ public class AliyunEcsServiceImpl implements AliyunEcsService {
     }
 
     @Override
-    public AliyunEcsReference client() {
-        final LazyInitializable<AliyunEcsReference, ElasticsearchException> clientReference = this.lazyClientReference.get();
+    public AcsClientReference client() {
+        final LazyInitializable<AcsClientReference, ElasticsearchException> clientReference = this.lazyClientReference.get();
         if (clientReference == null) {
             throw new IllegalStateException("Missing ecs client configs");
         }
@@ -98,10 +98,10 @@ public class AliyunEcsServiceImpl implements AliyunEcsService {
      */
     @Override
     public void refreshAndClearCache(EcsClientSettings clientSettings) {
-        final LazyInitializable<AliyunEcsReference, ElasticsearchException> newClient = new LazyInitializable<>(
-            () -> new AliyunEcsReference(buildClient(clientSettings)), AbstractRefCounted::incRef,
+        final LazyInitializable<AcsClientReference, ElasticsearchException> newClient = new LazyInitializable<>(
+            () -> new AcsClientReference(buildClient(clientSettings)), AbstractRefCounted::incRef,
             AbstractRefCounted::decRef);
-        final LazyInitializable<AliyunEcsReference, ElasticsearchException> oldClient = this.lazyClientReference.getAndSet(newClient);
+        final LazyInitializable<AcsClientReference, ElasticsearchException> oldClient = this.lazyClientReference.getAndSet(newClient);
         if (oldClient != null) {
             oldClient.reset();
         }
@@ -109,7 +109,7 @@ public class AliyunEcsServiceImpl implements AliyunEcsService {
 
     @Override
     public void close() {
-        final LazyInitializable<AliyunEcsReference, ElasticsearchException> clientReference = this.lazyClientReference.getAndSet(null);
+        final LazyInitializable<AcsClientReference, ElasticsearchException> clientReference = this.lazyClientReference.getAndSet(null);
         if (clientReference != null) {
             clientReference.reset();
         }

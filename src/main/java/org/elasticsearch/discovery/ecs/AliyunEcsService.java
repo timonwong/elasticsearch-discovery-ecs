@@ -85,7 +85,7 @@ interface AliyunEcsService extends Closeable {
      * settings. Returns an {@code AliyunEcsReference} wrapper which should
      * be released as soon as it is not required anymore.
      */
-    AliyunEcsReference client();
+    AcsClientReference client();
 
     /**
      * Updates the settings for building the client and releases the cached one.

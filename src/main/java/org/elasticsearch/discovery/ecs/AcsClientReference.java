@@ -28,12 +28,12 @@ import org.elasticsearch.common.util.concurrent.AbstractRefCounted;
  * Handles the shutdown of the wrapped {@link IAcsClient} using reference
  * counting.
  */
-public class AliyunEcsReference extends AbstractRefCounted implements Releasable {
+public class AcsClientReference extends AbstractRefCounted implements Releasable {
 
     private final IAcsClient client;
 
-    AliyunEcsReference(IAcsClient client) {
-        super("ALIYUN_ECS_CLIENT");
+    AcsClientReference(IAcsClient client) {
+        super("ALIYUN_OPENAPI_CLIENT");
         this.client = client;
     }
 
