@@ -92,6 +92,7 @@ public class AcsClientMock implements IAcsClient {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public <T extends AcsResponse> HttpResponse doAction(AcsRequest<T> request, String regionId, Credential credential) {
         throw new UnsupportedOperationException("Not supported in mock");
     }
@@ -186,6 +187,7 @@ public class AcsClientMock implements IAcsClient {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public <T extends AcsResponse> T getAcsResponse(AcsRequest<T> request, String regionId, Credential credential) {
         return getAcsResponse(request);
     }
