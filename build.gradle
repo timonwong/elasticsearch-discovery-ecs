@@ -84,14 +84,30 @@ checkstyleMain.ignoreFailures = false
 checkstyleTest.ignoreFailures = true
 
 dependencyLicenses.enabled = true
-forbiddenApisMain.enabled = false
+forbiddenApisMain.enabled = true
 forbiddenApisTest.enabled = true
 testingConventions.enabled = false
 
 integTest.enabled = false
 
 thirdPartyAudit {
-    enabled = false
+    enabled = true
+
+    ignoreMissingClasses(
+        // classes are missing
+        'org.apache.avalon.framework.logger.Logger',
+        'org.apache.commons.codec.binary.Base64',
+        'org.apache.log4j.Category',
+        'org.apache.log4j.Level',
+        'org.apache.log4j.Logger',
+        'org.apache.log4j.Priority',
+        'org.apache.log.Logger',
+        'org.apache.log.Hierarchy',
+        'javax.servlet.ServletContextEvent',
+        'javax.servlet.ServletContextListener',
+
+        'javax.activation.DataHandler',
+    )
 }
 
 dependencies {

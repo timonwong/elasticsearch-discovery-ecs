@@ -20,6 +20,7 @@
 package org.elasticsearch.discovery.ecs;
 
 import org.apache.commons.io.IOUtils;
+import org.elasticsearch.common.SuppressForbidden;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +44,7 @@ final class EcsMetadataUtils {
     private static final String ECS_METADATA_SERVICE_URL = "http://100.100.100.200";
     private static final String ECS_METADATA_ROOT = "/latest/meta-data/";
 
+    @SuppressForbidden(reason = "We call getInputStream in doPrivileged and provide SocketPermission")
     private static String readResult(String url, int retries) throws IOException {
         final URL endpoint = new URL(url);
         int attempts = 0;

@@ -55,7 +55,7 @@ public class EcsDiscoveryTests extends ESTestCase {
 
     protected static ThreadPool threadPool;
     protected MockTransportService transportService;
-    private Map<String, TransportAddress> poorMansDNS = new ConcurrentHashMap<>();
+    private final Map<String, TransportAddress> poorMansDNS = new ConcurrentHashMap<>();
 
     @BeforeClass
     public static void createThreadPool() {
@@ -151,9 +151,8 @@ public class EcsDiscoveryTests extends ESTestCase {
             .put(AliyunEcsService.HOST_TYPE_SETTING.getKey(), "does_not_exist")
             .build();
 
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class, () -> {
-            buildDynamicHosts(nodeSettings, 1);
-        });
+        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
+            () -> buildDynamicHosts(nodeSettings, 1));
         assertThat(exception.getMessage(), containsString("does_not_exist is unknown for discovery.ecs.host_type"));
     }
 

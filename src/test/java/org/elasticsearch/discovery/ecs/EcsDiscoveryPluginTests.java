@@ -125,6 +125,7 @@ public class EcsDiscoveryPluginTests extends ESTestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public void testClientSettingsReInit() throws IOException {
         final MockSecureSettings mockSecure1 = new MockSecureSettings();
         mockSecure1.setString(EcsClientSettings.ACCESS_KEY_SETTING.getKey(), "ecs_access_1");
