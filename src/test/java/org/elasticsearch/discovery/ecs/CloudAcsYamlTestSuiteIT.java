@@ -19,24 +19,20 @@
 
 package org.elasticsearch.discovery.ecs;
 
-import com.aliyuncs.IAcsClient;
-import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
-import com.aliyuncs.profile.DefaultProfile;
+import com.carrotsearch.randomizedtesting.annotations.Name;
+import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
+import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
+import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 
-import java.util.List;
+public class CloudAcsYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
 
-public class AliyunEcsServiceMock extends AliyunEcsServiceImpl {
-
-    private final int nodes;
-    private final List<List<DescribeInstancesResponse.Instance.Tag>> tagsList;
-
-    public AliyunEcsServiceMock(int nodes, List<List<DescribeInstancesResponse.Instance.Tag>> tagsList) {
-        this.nodes = nodes;
-        this.tagsList = tagsList;
+    public CloudAcsYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+        super(testCandidate);
     }
 
-    @Override
-    protected IAcsClient buildClient(String endpoint, DefaultProfile profile, EcsClientSettings clientSettings) {
-        return new AcsClientMock(nodes, tagsList, endpoint, profile, clientSettings);
+    @ParametersFactory
+    public static Iterable<Object[]> parameters() throws Exception {
+        return ESClientYamlSuiteTestCase.createParameters();
     }
+
 }
