@@ -130,7 +130,9 @@ public class AcsClientMock implements IAcsClient {
             tagFiltered = true;
 
             Set<String> tagValues = expectedTags.computeIfAbsent(tag.getKey(), k -> new HashSet<>());
-            tagValues.add(tag.getValue());
+            if (tag.getValue() != null) {
+                tagValues.add(tag.getValue());
+            }
         }
 
         final List<DescribeInstancesResponse.Instance> filteredInstances = new ArrayList<>();
@@ -155,7 +157,9 @@ public class AcsClientMock implements IAcsClient {
                         break;
                     }
 
-                    instanceFound = expectedTagsEntry.getValue().contains(instanceTagValue);
+                    if (!expectedTagsEntry.getValue().isEmpty()) {
+                        instanceFound = expectedTagsEntry.getValue().contains(instanceTagValue);
+                    }
                 }
             }
 
