@@ -20,7 +20,6 @@
 package org.elasticsearch.discovery.ecs;
 
 import com.aliyuncs.IAcsClient;
-import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
 import com.aliyuncs.profile.DefaultProfile;
 
 import java.util.List;
@@ -28,15 +27,15 @@ import java.util.List;
 public class AliyunEcsServiceMock extends AliyunEcsServiceImpl {
 
     private final int nodes;
-    private final List<List<DescribeInstancesResponse.Instance.Tag>> tagsList;
+    private final List<AcsClientMock.NodeOption> nodeOptions;
 
-    public AliyunEcsServiceMock(int nodes, List<List<DescribeInstancesResponse.Instance.Tag>> tagsList) {
+    public AliyunEcsServiceMock(int nodes, List<AcsClientMock.NodeOption> nodeOptions) {
         this.nodes = nodes;
-        this.tagsList = tagsList;
+        this.nodeOptions = nodeOptions;
     }
 
     @Override
     protected IAcsClient buildClient(String endpoint, DefaultProfile profile, EcsClientSettings clientSettings) {
-        return new AcsClientMock(nodes, tagsList, endpoint, profile, clientSettings);
+        return new AcsClientMock(nodes, nodeOptions, endpoint, profile, clientSettings);
     }
 }

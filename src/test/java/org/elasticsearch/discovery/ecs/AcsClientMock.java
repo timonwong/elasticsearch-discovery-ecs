@@ -44,9 +44,9 @@ public class AcsClientMock implements IAcsClient {
     final DefaultProfile profile;
     final EcsClientSettings configuration;
 
-    public AcsClientMock(int nodes, List<List<DescribeInstancesResponse.Instance.Tag>> tagsList, String endpoint,
+    public AcsClientMock(int nodes, List<NodeOption> nodeOptions, String endpoint,
                          DefaultProfile profile, EcsClientSettings configuration) {
-        assert tagsList == null || tagsList.size() == nodes;
+        assert nodeOptions == null || nodeOptions.size() == nodes;
 
         for (int node = 1; node < nodes + 1; node++) {
             String instanceId = "node" + node;
@@ -62,8 +62,10 @@ public class AcsClientMock implements IAcsClient {
             instance.setVpcAttributes(vpcAttributes);
             instance.setEipAddress(eipAddress);
 
-            if (tagsList != null) {
-                instance.setTags(tagsList.get(node - 1));
+            if (nodeOptions != null) {
+                final NodeOption opt = nodeOptions.get(node - 1);
+                instance.setTags(opt.tags);
+                instance.setZoneId(opt.zoneId);
             } else {
                 instance.setTags(Collections.emptyList());
             }
@@ -213,4 +215,55 @@ public class AcsClientMock implements IAcsClient {
     @Override
     public void shutdown() {
     }
+
+    static class InstanceTag extends DescribeInstancesResponse.Instance.Tag {
+        InstanceTag(String key, String value) {
+            super();
+            this.setTagKey(key);
+            this.setTagValue(value);
+        }
+    }
+
+    static class NodeOption {
+
+        private final List<DescribeInstancesResponse.Instance.Tag> tags;
+        private final String zoneId;
+
+        static class Builder {
+            private String zoneId;
+            private List<DescribeInstancesResponse.Instance.Tag> tags;
+            private List<String> securityGroups;
+
+            Builder setZondId(String zoneId) {
+                this.zoneId = zoneId;
+                return this;
+            }
+
+
+            Builder setTags(List<DescribeInstancesResponse.Instance.Tag> tags) {
+                this.tags = tags;
+                return this;
+            }
+
+            Builder setSecurityGroups(List<String> securityGroups) {
+                this.securityGroups = securityGroups;
+                return this;
+            }
+
+            NodeOption build() {
+                return new NodeOption(this);
+            }
+        }
+
+        private NodeOption(Builder builder) {
+            this.tags = builder.tags != null ? builder.tags : Collections.emptyList();
+            this.zoneId = builder.zoneId;
+        }
+
+        static Builder builder() {
+            return new Builder();
+        }
+
+    }
+
 }

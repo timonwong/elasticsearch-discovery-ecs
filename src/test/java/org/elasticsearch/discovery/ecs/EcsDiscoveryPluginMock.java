@@ -19,7 +19,6 @@
 
 package org.elasticsearch.discovery.ecs;
 
-import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
 import org.elasticsearch.common.settings.Settings;
 
 import java.util.List;
@@ -30,8 +29,8 @@ public class EcsDiscoveryPluginMock extends EcsDiscoveryPlugin {
         this(settings, 1, null);
     }
 
-    public EcsDiscoveryPluginMock(Settings settings, int nodes, List<List<DescribeInstancesResponse.Instance.Tag>> tagsList) {
-        super(settings, new AliyunEcsServiceMock(nodes, tagsList));
+    public EcsDiscoveryPluginMock(Settings settings, int nodes, List<AcsClientMock.NodeOption> nodeOptions) {
+        super(settings, new AliyunEcsServiceMock(nodes, nodeOptions));
     }
 
 }

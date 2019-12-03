@@ -19,7 +19,6 @@
 
 package org.elasticsearch.discovery.ecs;
 
-import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.network.NetworkService;
@@ -90,8 +89,8 @@ public class EcsDiscoveryTests extends ESTestCase {
         return buildDynamicHosts(nodeSettings, nodes, null);
     }
 
-    protected List<TransportAddress> buildDynamicHosts(Settings nodeSettings, int nodes, List<List<DescribeInstancesResponse.Instance.Tag>> tagsList) {
-        try (EcsDiscoveryPluginMock plugin = new EcsDiscoveryPluginMock(Settings.EMPTY, nodes, tagsList)) {
+    protected List<TransportAddress> buildDynamicHosts(Settings nodeSettings, int nodes, List<AcsClientMock.NodeOption> nodeOptions) {
+        try (EcsDiscoveryPluginMock plugin = new EcsDiscoveryPluginMock(Settings.EMPTY, nodes, nodeOptions)) {
             AliyunEcsSeedHostsProvider provider = new AliyunEcsSeedHostsProvider(nodeSettings, transportService, plugin.ecsService);
             List<TransportAddress> dynamicHosts = provider.getSeedAddresses(null);
             logger.debug("--> addresses found: {}", dynamicHosts);
@@ -156,6 +155,63 @@ public class EcsDiscoveryTests extends ESTestCase {
         assertThat(exception.getMessage(), containsString("does_not_exist is unknown for discovery.ecs.host_type"));
     }
 
+    public void testFilterByZoneId() {
+        int nodes = randomIntBetween(5, 10);
+        Settings nodeSettings = Settings.builder()
+            .put(AliyunEcsService.ZONE_IDS_SETTING.getKey(), "valid-zone")
+            .build();
+
+        int prodInstances = 0;
+        List<AcsClientMock.NodeOption> nodeOptions = new ArrayList<>();
+        for (int node = 0; node < nodes; node++) {
+            final String zoneID;
+
+            if (randomBoolean()) {
+                zoneID = "valid-zone";
+                prodInstances++;
+            } else {
+                zoneID = "invalid-zone";
+            }
+            final AcsClientMock.NodeOption nodeOption = AcsClientMock.NodeOption.builder()
+                .setZondId(zoneID)
+                .build();
+            nodeOptions.add(nodeOption);
+        }
+
+        logger.info("started [{}] instances with [{}] zone=valid-zone", nodes, prodInstances);
+        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, nodeOptions);
+        assertThat(dynamicHosts, hasSize(prodInstances));
+    }
+
+    public void testFilterByMultipleZoneIds() {
+        int nodes = randomIntBetween(5, 10);
+        Settings nodeSettings = Settings.builder()
+            .putList(AliyunEcsService.ZONE_IDS_SETTING.getKey(), "valid-zone-a", "valid-zone-b")
+            .build();
+
+        int prodInstances = 0;
+        List<AcsClientMock.NodeOption> nodeOptions = new ArrayList<>();
+        for (int node = 0; node < nodes; node++) {
+            final String zoneID;
+
+            if (randomBoolean()) {
+                zoneID = randomBoolean() ? "valid-zone-a" : "valid-zone-b";
+                prodInstances++;
+            } else {
+                zoneID = "invalid-zone";
+            }
+            final AcsClientMock.NodeOption nodeOption = AcsClientMock.NodeOption.builder()
+                .setZondId(zoneID)
+                .build();
+            nodeOptions.add(nodeOption);
+        }
+
+
+        logger.info("started [{}] instances with [{}] zone=valid-zone", nodes, prodInstances);
+        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, nodeOptions);
+        assertThat(dynamicHosts, hasSize(prodInstances));
+    }
+
     public void testFilterByTags() {
         int nodes = randomIntBetween(5, 10);
         Settings nodeSettings = Settings.builder()
@@ -163,27 +219,23 @@ public class EcsDiscoveryTests extends ESTestCase {
             .build();
 
         int prodInstances = 0;
-        List<List<DescribeInstancesResponse.Instance.Tag>> tagsList = new ArrayList<>();
-
+        List<AcsClientMock.NodeOption> nodeOptions = new ArrayList<>();
         for (int node = 0; node < nodes; node++) {
-            List<DescribeInstancesResponse.Instance.Tag> tags = new ArrayList<>();
+            final AcsClientMock.InstanceTag tag;
             if (randomBoolean()) {
-                final DescribeInstancesResponse.Instance.Tag tag = new DescribeInstancesResponse.Instance.Tag();
-                tag.setTagKey("stage");
-                tag.setTagValue("prod");
-                tags.add(tag);
+                tag = new AcsClientMock.InstanceTag("stage", "prod");
                 prodInstances++;
             } else {
-                final DescribeInstancesResponse.Instance.Tag tag = new DescribeInstancesResponse.Instance.Tag();
-                tag.setTagKey("stage");
-                tag.setTagValue("dev");
-                tags.add(tag);
+                tag = new AcsClientMock.InstanceTag("stage", "dev");
             }
-            tagsList.add(tags);
+            final AcsClientMock.NodeOption nodeOption = AcsClientMock.NodeOption.builder()
+                .setTags(Collections.singletonList(tag))
+                .build();
+            nodeOptions.add(nodeOption);
         }
 
         logger.info("started [{}] instances with [{}] stage=prod tag", nodes, prodInstances);
-        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, tagsList);
+        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, nodeOptions);
         assertThat(dynamicHosts, hasSize(prodInstances));
     }
 
@@ -194,32 +246,23 @@ public class EcsDiscoveryTests extends ESTestCase {
             .build();
 
         int prodInstances = 0;
-        List<List<DescribeInstancesResponse.Instance.Tag>> tagsList = new ArrayList<>();
-
+        List<AcsClientMock.NodeOption> nodeOptions = new ArrayList<>();
         for (int node = 0; node < nodes; node++) {
-            List<DescribeInstancesResponse.Instance.Tag> tags = new ArrayList<>();
+            final AcsClientMock.InstanceTag tag;
             if (randomBoolean()) {
-                DescribeInstancesResponse.Instance.Tag tag = new DescribeInstancesResponse.Instance.Tag();
-                if (randomBoolean()) {
-                    tag.setTagKey("stage");
-                    tag.setTagValue("preprod");
-                } else {
-                    tag.setTagKey("stage");
-                    tag.setTagValue("prod");
-                }
+                tag = new AcsClientMock.InstanceTag("stage", randomBoolean() ? "preprod" : "prod");
                 prodInstances++;
-                tags.add(tag);
             } else {
-                DescribeInstancesResponse.Instance.Tag tag = new DescribeInstancesResponse.Instance.Tag();
-                tag.setTagKey("stage");
-                tag.setTagValue("test");
-                tags.add(tag);
+                tag = new AcsClientMock.InstanceTag("stage", "test");
             }
-            tagsList.add(tags);
+            final AcsClientMock.NodeOption nodeOption = AcsClientMock.NodeOption.builder()
+                .setTags(Collections.singletonList(tag))
+                .build();
+            nodeOptions.add(nodeOption);
         }
 
         logger.info("started [{}] instances with [{}] stage=prod tag", nodes, prodInstances);
-        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, tagsList);
+        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, nodeOptions);
         assertThat(dynamicHosts, hasSize(prodInstances));
     }
 
@@ -237,19 +280,17 @@ public class EcsDiscoveryTests extends ESTestCase {
             .put(AliyunEcsService.HOST_TYPE_SETTING.getKey(), "tag:foo")
             .build();
 
-        List<List<DescribeInstancesResponse.Instance.Tag>> tagsList = new ArrayList<>();
+        List<AcsClientMock.NodeOption> nodeOptions = new ArrayList<>();
 
         for (int node = 0; node < nodes; node++) {
-            List<DescribeInstancesResponse.Instance.Tag> tags = new ArrayList<>();
-            final DescribeInstancesResponse.Instance.Tag tag = new DescribeInstancesResponse.Instance.Tag();
-            tag.setTagKey("foo");
-            tag.setTagValue("node" + (node + 1));
-            tags.add(tag);
-            tagsList.add(tags);
+            final AcsClientMock.NodeOption nodeOption = AcsClientMock.NodeOption.builder()
+                .setTags(Collections.singletonList(new AcsClientMock.InstanceTag("foo", "node" + (node + 1))))
+                .build();
+            nodeOptions.add(nodeOption);
         }
 
         logger.info("started [{}] instances", nodes);
-        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, tagsList);
+        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, nodeOptions);
         assertThat(dynamicHosts, hasSize(nodes));
         int node = 1;
         for (TransportAddress address : dynamicHosts) {
