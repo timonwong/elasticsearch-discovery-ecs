@@ -66,8 +66,10 @@ public class AcsClientMock implements IAcsClient {
                 final NodeOption opt = nodeOptions.get(node - 1);
                 instance.setTags(opt.tags);
                 instance.setZoneId(opt.zoneId);
+                instance.setSecurityGroupIds(opt.securityGroups);
             } else {
                 instance.setTags(Collections.emptyList());
+                instance.setSecurityGroupIds(Collections.emptyList());
             }
 
             instances.add(instance);
@@ -226,8 +228,9 @@ public class AcsClientMock implements IAcsClient {
 
     static class NodeOption {
 
-        private final List<DescribeInstancesResponse.Instance.Tag> tags;
         private final String zoneId;
+        private final List<DescribeInstancesResponse.Instance.Tag> tags;
+        private final List<String> securityGroups;
 
         static class Builder {
             private String zoneId;
@@ -256,8 +259,9 @@ public class AcsClientMock implements IAcsClient {
         }
 
         private NodeOption(Builder builder) {
-            this.tags = builder.tags != null ? builder.tags : Collections.emptyList();
             this.zoneId = builder.zoneId;
+            this.tags = (builder.tags != null) ? builder.tags : Collections.emptyList();
+            this.securityGroups = (builder.securityGroups != null) ? builder.securityGroups : Collections.emptyList();
         }
 
         static Builder builder() {
