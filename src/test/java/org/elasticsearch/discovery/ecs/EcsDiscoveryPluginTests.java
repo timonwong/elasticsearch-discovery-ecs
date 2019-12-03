@@ -33,8 +33,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.function.BiConsumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -45,7 +43,7 @@ import static org.hamcrest.Matchers.nullValue;
 @SuppressForbidden(reason = "use http server")
 public class EcsDiscoveryPluginTests extends ESTestCase {
 
-    private HttpServer startMetaServerForZoneId(String zoneId) throws Exception {
+    private HttpServer startMetaServerForZoneId(String subPath, String content) throws Exception {
         final HttpServer httpServer = MockHttpServer.createHttp(
             new InetSocketAddress(InetAddress.getLoopbackAddress().getHostAddress(), 0), 0);
 
@@ -59,17 +57,16 @@ public class EcsDiscoveryPluginTests extends ESTestCase {
             });
         };
 
-        registerContext.accept("/latest/meta-data/zone-id", zoneId);
+        registerContext.accept("/latest/meta-data/" + subPath, content);
         httpServer.start();
         return httpServer;
     }
 
-    private Settings getNodeAttributes(Settings settings, String zoneId) throws Exception {
-        final HttpServer httpServer = startMetaServerForZoneId(zoneId);
-        AccessController.doPrivileged((PrivilegedAction<String>) () ->
+    private Settings getNodeAttributes(Settings settings, String subPath, String content) throws Exception {
+        final HttpServer httpServer = startMetaServerForZoneId(subPath, content);
+        SocketAccess.doPrivileged(() ->
             System.setProperty(ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY,
-                "http://" + httpServer.getAddress().getHostName() + ":" + httpServer.getAddress().getPort())
-        );
+                String.format("http://%s:%d", httpServer.getAddress().getHostName(), httpServer.getAddress().getPort())));
 
         try {
             final Settings realSettings = Settings.builder()
@@ -78,14 +75,12 @@ public class EcsDiscoveryPluginTests extends ESTestCase {
             return EcsDiscoveryPlugin.getZoneIdAttributes(realSettings);
         } finally {
             httpServer.stop(0);
-            AccessController.doPrivileged((PrivilegedAction<String>) () ->
-                System.clearProperty(ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY)
-            );
+            SocketAccess.doPrivileged(() -> System.clearProperty(ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY));
         }
     }
 
-    private void assertNodeAttributes(Settings settings, String zoneId, String expected) throws Exception {
-        final Settings additional = getNodeAttributes(settings, zoneId);
+    private void assertNodeAttributes(Settings settings, String subPath, String content, String expected) throws Exception {
+        final Settings additional = getNodeAttributes(settings, subPath, content);
         if (expected == null) {
             assertTrue(additional.isEmpty());
         } else {
@@ -96,18 +91,22 @@ public class EcsDiscoveryPluginTests extends ESTestCase {
     public void testNodeAttributesDisabled() throws Exception {
         final Settings settings = Settings.builder()
             .put(AliyunEcsService.AUTO_ATTRIBUTE_SETTING.getKey(), false).build();
-        assertNodeAttributes(settings, "bogus", null);
+        assertNodeAttributes(settings, "zone-id", "bogus", null);
     }
 
     public void testNodeAttributes() throws Exception {
-        assertNodeAttributes(Settings.EMPTY, "cn-hangzhou-b", "cn-hangzhou-b");
+        assertNodeAttributes(Settings.EMPTY, "zone-id", "cn-hangzhou-b", "cn-hangzhou-b");
     }
 
     public void testNodeAttributesEmpty() {
         final IllegalStateException e = expectThrows(IllegalStateException.class, () ->
-            getNodeAttributes(Settings.EMPTY, "")
+            getNodeAttributes(Settings.EMPTY, "zone-id", "")
         );
         assertThat(e.getMessage(), is("no ecs [zone-id] metadata returned"));
+    }
+
+    public void testNodeAttributesMissing() throws Exception {
+        assertNodeAttributes(Settings.EMPTY, "bogus", "xxx", null);
     }
 
     public void testDefaultEndpoint() throws IOException {

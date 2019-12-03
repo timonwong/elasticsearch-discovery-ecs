@@ -36,8 +36,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.function.BiConsumer;
@@ -80,15 +78,15 @@ public class EcsNetworkTests extends ESTestCase {
     @Before
     public void setup() {
         // redirect ECS metadata service to httpServer
-        AccessController.doPrivileged((PrivilegedAction<String>) () ->
+        SocketAccess.doPrivileged(() ->
             System.setProperty(ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY,
-                "http://" + httpServer.getAddress().getHostName() + ":" + httpServer.getAddress().getPort())
+                String.format("http://%s:%d", httpServer.getAddress().getHostName(), httpServer.getAddress().getPort()))
         );
     }
 
     @After
     public void teardown() {
-        AccessController.doPrivileged((PrivilegedAction<String>) () ->
+        SocketAccess.doPrivileged(() ->
             System.clearProperty(ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY)
         );
     }
@@ -111,7 +109,7 @@ public class EcsNetworkTests extends ESTestCase {
      */
     public void testNetworkHostUnableToResolveEcs() {
         // redirect EC2 metadata service to unknown location
-        AccessController.doPrivileged((PrivilegedAction<String>) () -> System.setProperty(ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY,
+        SocketAccess.doPrivileged(() -> System.setProperty(ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY,
             "http://127.0.0.1/"));
 
         try {
