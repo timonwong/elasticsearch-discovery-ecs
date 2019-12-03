@@ -149,7 +149,7 @@ public class EcsDiscoveryPluginTests extends ESTestCase {
             .setSecureSettings(mockSecure2)
             .build();
         try (EcsDiscoveryPluginMock plugin = new EcsDiscoveryPluginMock(settings1)) {
-            try (AliyunEcsReference clientReference = plugin.ecsService.client()) {
+            try (AcsClientReference clientReference = plugin.ecsService.client()) {
                 {
                     final Credential credential = ((AcsClientMock) clientReference.client()).profile.getCredential();
                     assertThat(credential.getAccessKeyId(), is("ecs_access_1"));
@@ -174,7 +174,7 @@ public class EcsDiscoveryPluginTests extends ESTestCase {
                     assertThat(((AcsClientMock) clientReference.client()).endpoint, is("ecs_endpoint_1"));
                 }
             }
-            try (AliyunEcsReference clientReference = plugin.ecsService.client()) {
+            try (AcsClientReference clientReference = plugin.ecsService.client()) {
                 final Credential credential = ((AcsClientMock) clientReference.client()).profile.getCredential();
                 assertThat(credential.getAccessKeyId(), is("ecs_access_2"));
                 assertThat(credential.getAccessSecret(), is("ecs_secret_2"));

@@ -100,7 +100,7 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
         for (int pageNumber = 1; ; pageNumber++) {
             final DescribeInstancesResponse descInstances;
 
-            try (AliyunEcsReference clientReference = ecsService.client()) {
+            try (AcsClientReference clientReference = ecsService.client()) {
                 // Query ECS API based on region, instance state, and tag.
 
                 // NOTE: we don't filter by security group during the describe instances request for two reasons:
