@@ -32,6 +32,7 @@ import org.elasticsearch.discovery.SeedHostsProvider;
 import org.elasticsearch.transport.TransportService;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.elasticsearch.discovery.ecs.AliyunEcsService.HostType.PRIVATE_IP;
 import static org.elasticsearch.discovery.ecs.AliyunEcsService.HostType.PUBLIC_IP;
@@ -52,6 +53,8 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
 
     private final Map<String, List<String>> tags;
 
+    private final Map<String, Set<String>> tagsWithMultipleValues;
+
     private final Set<String> zoneIds;
 
     private final String hostType;
@@ -71,6 +74,9 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
         this.groups.addAll(AliyunEcsService.GROUPS_SETTING.get(settings));
 
         this.tags = AliyunEcsService.TAG_SETTING.getAsMap(settings);
+        this.tagsWithMultipleValues = tags.entrySet().stream()
+            .filter(entry -> entry.getValue().size() > 1)
+            .collect(Collectors.toMap(Map.Entry::getKey, (v) -> new HashSet<>(v.getValue())));
 
         this.zoneIds = new HashSet<>();
         zoneIds.addAll(AliyunEcsService.ZONE_IDS_SETTING.get(settings));
@@ -109,12 +115,11 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
                 return dynamicHosts;
             }
 
-            final List<DescribeInstancesResponse.Instance> interInstances = descInstances.getInstances();
-            if (interInstances.isEmpty()) {
+            final List<DescribeInstancesResponse.Instance> respInstances = descInstances.getInstances();
+            if (respInstances.isEmpty()) {
                 break;
             }
-
-            instances.addAll(interInstances);
+            instances.addAll(respInstances);
         }
 
         logger.trace("finding seed nodes...");
@@ -126,6 +131,22 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
                     // continue to the next instance
                     continue;
                 }
+            }
+
+            // then by tags, OR relationship
+            boolean tagFound = true;
+            for (final DescribeInstancesResponse.Instance.Tag tag : instance.getTags()) {
+                if (!tagsWithMultipleValues.containsKey(tag.getTagKey())) {
+                    continue;
+                }
+
+                if (!tagsWithMultipleValues.get(tag.getTagKey()).contains(tag.getTagValue())) {
+                    tagFound = false;
+                    break;
+                }
+            }
+            if (!tagFound) {
+                continue;
             }
 
             // lets see if we can filter based on groups
@@ -206,14 +227,13 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
 
         final List<DescribeInstancesRequest.Tag> filterTags = new ArrayList<>();
         for (final Map.Entry<String, List<String>> tagFilter : tags.entrySet()) {
-            // for a given tag key, OR relationship for multiple different values
-            final String tagKey = tagFilter.getKey();
-            for (final String tagValue : tagFilter.getValue()) {
-                final DescribeInstancesRequest.Tag tag = new DescribeInstancesRequest.Tag();
-                tag.setKey(tagKey);
-                tag.setValue(tagValue);
-                filterTags.add(tag);
+            // for a given tag key, AND relationship is applied, so we need to filter it somewhere else...
+            final DescribeInstancesRequest.Tag tag = new DescribeInstancesRequest.Tag();
+            tag.setKey(tagFilter.getKey());
+            if (tagFilter.getValue().size() == 1) {
+                tag.setValue(tagFilter.getValue().get(0));
             }
+            filterTags.add(tag);
         }
         describeInstancesRequest.setTags(filterTags);
         return describeInstancesRequest;
