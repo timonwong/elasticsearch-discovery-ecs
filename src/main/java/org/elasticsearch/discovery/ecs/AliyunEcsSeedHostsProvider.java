@@ -208,7 +208,7 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
                         dynamicHosts.add(transportAddr);
                     }
                 } catch (final Exception e) {
-                    logger.warn("failed to add {}, address {}", instance.getInstanceId(), address);
+                    logger.warn("failed to add {}, address {}: {}", instance.getInstanceId(), address, e);
                 }
             } else {
                 logger.trace("not adding {}, address is null, host_type {}", instance.getInstanceId(), hostType);
@@ -220,14 +220,10 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
     }
 
     private DescribeInstancesRequest buildDescribeInstancesRequest(int pageNumber) {
-        final DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
-        describeInstancesRequest.setStatus("Running");
-        describeInstancesRequest.setPageNumber(pageNumber);
-        describeInstancesRequest.setPageSize(100);
-
         final List<DescribeInstancesRequest.Tag> filterTags = new ArrayList<>();
         for (final Map.Entry<String, List<String>> tagFilter : tags.entrySet()) {
-            // for a given tag key, AND relationship is applied, so we need to filter it somewhere else...
+            // for a given tag key, AND relationship is applied. So in order to implement OR
+            // relationship for tag filter, only tag key is given.
             final DescribeInstancesRequest.Tag tag = new DescribeInstancesRequest.Tag();
             tag.setKey(tagFilter.getKey());
             if (tagFilter.getValue().size() == 1) {
@@ -235,8 +231,13 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
             }
             filterTags.add(tag);
         }
-        describeInstancesRequest.setTags(filterTags);
-        return describeInstancesRequest;
+
+        final DescribeInstancesRequest request = new DescribeInstancesRequest();
+        request.setPageNumber(pageNumber);
+        request.setPageSize(100);
+        request.setStatus("Running");
+        request.setTags(filterTags);
+        return request;
     }
 
     private final class TransportAddressesCache extends SingleObjectCache<List<TransportAddress>> {
@@ -244,7 +245,7 @@ public class AliyunEcsSeedHostsProvider implements SeedHostsProvider {
         private boolean empty = true;
 
         protected TransportAddressesCache(TimeValue refreshInterval) {
-            super(refreshInterval, new ArrayList<>());
+            super(refreshInterval, Collections.emptyList());
         }
 
         @Override
