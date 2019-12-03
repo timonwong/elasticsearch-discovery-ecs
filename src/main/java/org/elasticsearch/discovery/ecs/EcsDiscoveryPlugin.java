@@ -109,6 +109,7 @@ public class EcsDiscoveryPlugin extends Plugin implements DiscoveryPlugin, Reloa
         return builder.build();
     }
 
+    // pkg private for testing
     @SuppressForbidden(reason = "We call getInputStream in doPrivileged and provide SocketPermission")
     static Settings getZoneIdAttributes(Settings settings) {
         if (!AliyunEcsService.AUTO_ATTRIBUTE_SETTING.get(settings)) {
@@ -119,7 +120,7 @@ public class EcsDiscoveryPlugin extends Plugin implements DiscoveryPlugin, Reloa
         try {
             logger.debug("obtaining ecs [zone-id] from ecs meta-data url");
             final String zoneId = SocketAccess.doPrivilegedIOException(EcsMetadataUtils::getZoneId);
-            if (Strings.isNullOrEmpty(zoneId)) {
+            if (!Strings.hasText(zoneId)) {
                 throw new IllegalStateException("no ecs [zone-id] metadata returned");
             } else {
                 attrs.put(Node.NODE_ATTRIBUTES.getKey() + "alicloud_zone_id", zoneId);

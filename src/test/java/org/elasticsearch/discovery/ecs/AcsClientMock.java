@@ -24,6 +24,7 @@ import com.aliyuncs.auth.Credential;
 import com.aliyuncs.ecs.model.v20140526.DescribeInstancesRequest;
 import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
 import com.aliyuncs.http.HttpResponse;
+import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,8 +40,12 @@ public class AcsClientMock implements IAcsClient {
     public static final String PREFIX_PUBLIC_IP = "8.8.8.";
 
     final List<DescribeInstancesResponse.Instance> instances = new ArrayList<>();
+    final String endpoint;
+    final DefaultProfile profile;
+    final EcsClientSettings configuration;
 
-    public AcsClientMock(int nodes, List<List<DescribeInstancesResponse.Instance.Tag>> tagsList) {
+    public AcsClientMock(int nodes, List<List<DescribeInstancesResponse.Instance.Tag>> tagsList, String endpoint,
+                         DefaultProfile profile, EcsClientSettings configuration) {
         assert tagsList == null || tagsList.size() == nodes;
 
         for (int node = 1; node < nodes + 1; node++) {
@@ -65,6 +70,10 @@ public class AcsClientMock implements IAcsClient {
 
             instances.add(instance);
         }
+
+        this.endpoint = endpoint;
+        this.profile = profile;
+        this.configuration = configuration;
     }
 
     @Override

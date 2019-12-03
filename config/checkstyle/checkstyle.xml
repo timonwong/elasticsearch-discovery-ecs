@@ -47,7 +47,7 @@
         </module>
 
         <module name="AvoidStarImport">
-            <property name="excludes" value="java.util,com.aliyuncs.auth,org.elasticsearch.common.settings"/>
+            <property name="excludes" value="java.util,org.elasticsearch.common.settings,com.aliyuncs.auth,com.aliyuncs"/>
         </module>
 
         <!-- Unused imports are forbidden -->

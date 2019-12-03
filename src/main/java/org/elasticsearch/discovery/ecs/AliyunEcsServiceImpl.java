@@ -42,19 +42,31 @@ public class AliyunEcsServiceImpl implements AliyunEcsService {
     private final AtomicReference<LazyInitializable<AliyunEcsReference, ElasticsearchException>> lazyClientReference =
         new AtomicReference<>();
 
-    // pkg private for tests
-    protected IAcsClient buildClient(EcsClientSettings clientSettings) {
+    private IAcsClient buildClient(EcsClientSettings clientSettings) {
         final AlibabaCloudCredentialsProvider credentials = buildCredentials(clientSettings);
         final DefaultProfile profile = DefaultProfile.getProfile(clientSettings.region);
         profile.setCredentialsProvider(credentials);
 
-        final DefaultAcsClient client = SocketAccess.doPrivileged(() -> new DefaultAcsClient(profile));
         // Customize endpoint
+        String endpoint = null;
         if (Strings.hasText(clientSettings.endpoint)) {
-            logger.debug("using explicit ecs endpoint [{}]", clientSettings.endpoint);
-            DefaultEndpointResolver endpointResolver = new DefaultEndpointResolver(client);
-            endpointResolver.putEndpointEntry(clientSettings.region, "ecs", clientSettings.endpoint);
+            endpoint = clientSettings.endpoint;
+            logger.debug("using explicit ecs endpoint [{}]", endpoint);
         }
+
+        return buildClient(endpoint, profile, clientSettings);
+    }
+
+    // proxy for testing
+    IAcsClient buildClient(String endpoint, DefaultProfile profile, EcsClientSettings clientSettings) {
+        final DefaultAcsClient client = SocketAccess.doPrivileged(() -> new DefaultAcsClient(profile));
+
+        if (endpoint != null) {
+            final DefaultEndpointResolver endpointResolver = new DefaultEndpointResolver(client, profile);
+            endpointResolver.putEndpointEntry(clientSettings.region, "ecs", endpoint);
+            client.setEndpointResolver(endpointResolver);
+        }
+
         return client;
     }
 

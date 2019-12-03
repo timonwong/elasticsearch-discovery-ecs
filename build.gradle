@@ -85,6 +85,7 @@ checkstyleTest.ignoreFailures = true
 
 dependencyLicenses.enabled = true
 forbiddenApisMain.enabled = false
+forbiddenApisTest.enabled = true
 testingConventions.enabled = false
 
 integTest.enabled = false
@@ -98,6 +99,7 @@ dependencies {
     compile group: 'com.aliyun', name: 'aliyun-java-sdk-ecs', version: '4.16.10'
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
 
+    compileOnly "org.slf4j:slf4j-api:${versions.slf4j}"
     compile "com.google.code.gson:gson:2.8.5"
     compile "org.ini4j:ini4j:0.5.4"
     compile "javax.xml.bind:jaxb-api:2.3.1"

@@ -27,6 +27,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.mocksocket.MockHttpServer;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.test.ESTestCase;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -82,6 +83,13 @@ public class EcsNetworkTests extends ESTestCase {
         AccessController.doPrivileged((PrivilegedAction<String>) () ->
             System.setProperty(ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY,
                 "http://" + httpServer.getAddress().getHostName() + ":" + httpServer.getAddress().getPort())
+        );
+    }
+
+    @After
+    public void teardown() {
+        AccessController.doPrivileged((PrivilegedAction<String>) () ->
+            System.clearProperty(ECS_METADATA_SERVICE_OVERRIDE_SYSTEM_PROPERTY)
         );
     }
 
