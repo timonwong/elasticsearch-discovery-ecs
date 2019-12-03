@@ -1,5 +1,7 @@
 # Aliyun ECS Discovery Plugin for Elasticsearch
 
+[![Codecov](https://img.shields.io/codecov/c/gh/timonwong/elasticsearch-discovery-ecs?style=flat-square)]((https://codecov.io/gh/timonwong/elasticsearch-discovery-ecs))
+
 The Aliyun ECS Discovery plugin uses the ECS API to identify the addresses of seed hosts. similar to the official [EC2 Discovery Plugin](https://www.elastic.co/guide/en/elasticsearch/plugins/current/discovery-ec2.html).
 
 ## Versions
