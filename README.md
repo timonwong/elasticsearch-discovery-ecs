@@ -32,7 +32,7 @@ The plugin must be installed on every node in the cluster, and each node must be
 The plugin can be removed with the following command:
 
 ```bash
-sudo bin/plugin remove elasticsearch-discovery-ecs
+sudo bin/elasticsearch-plugin remove elasticsearch-discovery-ecs
 ```
 
 The node must be stopped before removing the plugin.
