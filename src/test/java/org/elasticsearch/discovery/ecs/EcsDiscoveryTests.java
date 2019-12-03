@@ -40,10 +40,7 @@ import org.junit.BeforeClass;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.hamcrest.Matchers.containsString;
@@ -208,6 +205,66 @@ public class EcsDiscoveryTests extends ESTestCase {
 
 
         logger.info("started [{}] instances with [{}] zone=valid-zone", nodes, prodInstances);
+        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, nodeOptions);
+        assertThat(dynamicHosts, hasSize(prodInstances));
+    }
+
+    public void testFilterBySecurityGroups() {
+        List<String> nodeSecurityGroups = Arrays.asList("sg-test-a", "sg-test-b", "sg-test-c");
+        int nodes = randomIntBetween(5, 10);
+        Settings nodeSettings = Settings.builder()
+            .put(AliyunEcsService.ANY_GROUP_SETTING.getKey(), false) // require all security group match
+            .putList(AliyunEcsService.GROUPS_SETTING.getKey(), nodeSecurityGroups)
+            .build();
+
+        int prodInstances = 0;
+        List<AcsClientMock.NodeOption> nodeOptions = new ArrayList<>();
+        for (int node = 0; node < nodes; node++) {
+            final List<String> securityGroups;
+
+            if (randomBoolean()) {
+                securityGroups = nodeSecurityGroups;
+                prodInstances++;
+            } else {
+                securityGroups = nodeSecurityGroups.subList(0, randomInt(nodeSecurityGroups.size() - 1));
+            }
+            final AcsClientMock.NodeOption nodeOption = AcsClientMock.NodeOption.builder()
+                .setSecurityGroups(securityGroups)
+                .build();
+            nodeOptions.add(nodeOption);
+        }
+
+        logger.info("started [{}] instances with [{}] security-groups", nodes, prodInstances);
+        List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, nodeOptions);
+        assertThat(dynamicHosts, hasSize(prodInstances));
+    }
+
+    public void testFilterByAnySecurityGroup() {
+        List<String> nodeSecurityGroups = Arrays.asList("sg-test-a", "sg-test-b", "sg-test-c");
+        int nodes = randomIntBetween(5, 10);
+        Settings nodeSettings = Settings.builder()
+            .put(AliyunEcsService.ANY_GROUP_SETTING.getKey(), true)
+            .putList(AliyunEcsService.GROUPS_SETTING.getKey(), nodeSecurityGroups)
+            .build();
+
+        int prodInstances = 0;
+        List<AcsClientMock.NodeOption> nodeOptions = new ArrayList<>();
+        for (int node = 0; node < nodes; node++) {
+            final List<String> securityGroups;
+
+            if (randomBoolean()) {
+                securityGroups = Collections.singletonList(nodeSecurityGroups.get(randomInt(nodeSecurityGroups.size() - 1)));
+                prodInstances++;
+            } else {
+                securityGroups = Collections.singletonList("invalid-group");
+            }
+            final AcsClientMock.NodeOption nodeOption = AcsClientMock.NodeOption.builder()
+                .setSecurityGroups(securityGroups)
+                .build();
+            nodeOptions.add(nodeOption);
+        }
+
+        logger.info("started [{}] instances with [{}] zone=security-groups", nodes, prodInstances);
         List<TransportAddress> dynamicHosts = buildDynamicHosts(nodeSettings, nodes, nodeOptions);
         assertThat(dynamicHosts, hasSize(prodInstances));
     }
