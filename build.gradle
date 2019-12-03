@@ -45,7 +45,7 @@ ext {
     isSnapshot = "true" == System.getProperty("build.snapshot", "true")
 }
 
-version = "${pluginVersion}.0"
+version = "${pluginVersion}.1"
 
 apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'jacoco'
