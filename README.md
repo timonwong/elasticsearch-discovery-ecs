@@ -1,6 +1,8 @@
 # Aliyun ECS Discovery Plugin for Elasticsearch
 
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/timonwong/elasticsearch-discovery-ecs/Java%20CI?style=flat-square)](https://github.com/timonwong/elasticsearch-discovery-ecs/actions?query=workflow%3A%22Java+CI%22)
 [![Codecov](https://img.shields.io/codecov/c/gh/timonwong/elasticsearch-discovery-ecs?style=flat-square)]((https://codecov.io/gh/timonwong/elasticsearch-discovery-ecs))
+[![GitHub](https://img.shields.io/github/license/timonwong/elasticsearch-discovery-ecs?style=flat-square)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 The Aliyun ECS Discovery plugin uses the ECS API to identify the addresses of seed hosts. similar to the official [EC2 Discovery Plugin](https://www.elastic.co/guide/en/elasticsearch/plugins/current/discovery-ec2.html).
 
