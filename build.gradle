@@ -53,8 +53,6 @@ ext {
     noticeFile = rootProject.file('NOTICE')
 }
 
-println ext
-
 // common maven publishing configuration
 allprojects {
     group = 'com.github.timonwong'
@@ -63,27 +61,6 @@ allprojects {
 
     plugins.withId('java') {
         sourceCompatibility = targetCompatibility = "1.8"
-    }
-}
-
-subprojects {
-
-}
-
-gradle.projectsEvaluated {
-    subprojects {
-        /*
-         * Remove assemble/dependenciesInfo on all qa projects because we don't
-         * need to publish artifacts for them.
-         */
-        if (project.name.equals('qa') || project.path.contains(':qa:')) {
-            maybeConfigure(project.tasks, 'assemble') {
-                it.enabled = false
-            }
-            maybeConfigure(project.tasks, 'dependenciesInfo') {
-                it.enabled = false
-            }
-        }
     }
 }
 
@@ -174,11 +151,6 @@ dependencies {
 
 dependencyLicenses {
     mapping from: /aliyun-java-sdk-.*/, to: 'aliyun-java-sdk'
-}
-
-check {
-    // also execute the QA tests when testing the plugin
-    // dependsOn 'qa:aliyun-ecs:check'
 }
 
 apply plugin: 'nebula.ospackage'
