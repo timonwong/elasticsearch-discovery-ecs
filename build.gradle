@@ -13,6 +13,8 @@
  *   permissions and limitations under the License.
  */
 
+import static org.elasticsearch.gradle.tool.Boilerplate.maybeConfigure
+
 buildscript {
 
     ext {
@@ -27,6 +29,7 @@ buildscript {
     dependencies {
         classpath "org.elasticsearch.gradle:build-tools:${es_version}"
     }
+
 }
 
 plugins {
@@ -41,11 +44,48 @@ repositories {
 }
 
 ext {
+    projectSubstitutions = [:]
+
     pluginVersion = '7.4.2'
     isSnapshot = "true" == System.getProperty("build.snapshot", "true")
+
+    licenseFile = rootProject.file('LICENSE.TXT')
+    noticeFile = rootProject.file('NOTICE')
 }
 
-version = "${pluginVersion}.1"
+println ext
+
+// common maven publishing configuration
+allprojects {
+    group = 'com.github.timonwong'
+    version = "${pluginVersion}.1"
+    description = 'Aliyun ECS discovery plugin for Elasticsearch'
+
+    plugins.withId('java') {
+        sourceCompatibility = targetCompatibility = "1.8"
+    }
+}
+
+subprojects {
+
+}
+
+gradle.projectsEvaluated {
+    subprojects {
+        /*
+         * Remove assemble/dependenciesInfo on all qa projects because we don't
+         * need to publish artifacts for them.
+         */
+        if (project.name.equals('qa') || project.path.contains(':qa:')) {
+            maybeConfigure(project.tasks, 'assemble') {
+                it.enabled = false
+            }
+            maybeConfigure(project.tasks, 'dependenciesInfo') {
+                it.enabled = false
+            }
+        }
+    }
+}
 
 apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'jacoco'
@@ -60,16 +100,10 @@ jacocoTestReport {
     }
 }
 
-ext {
-    projectSubstitutions = [:]
-    licenseFile = rootProject.file('LICENSE.TXT')
-    noticeFile = rootProject.file('NOTICE')
-}
-
 esplugin {
     name 'elasticsearch-discovery-ecs' // zip file name and plugin name in ${elasticsearch.plugin.name} read by ES when plugin loading
-    description 'Aliyun ECS discovery plugin for Elasticsearch'
-    classname 'org.elasticsearch.discovery.ecs.EcsDiscoveryPlugin'
+    description "${project.description}"
+    classname 'com.github.timonwong.elasticsearch.discovery.ecs.EcsDiscoveryPlugin'
     licenseFile rootProject.file("LICENSE.txt")
     noticeFile rootProject.file("NOTICE")
 }
@@ -142,12 +176,17 @@ dependencyLicenses {
     mapping from: /aliyun-java-sdk-.*/, to: 'aliyun-java-sdk'
 }
 
+check {
+    // also execute the QA tests when testing the plugin
+    // dependsOn 'qa:aliyun-ecs:check'
+}
+
 apply plugin: 'nebula.ospackage'
 
 // This is afterEvaluate because the bundlePlugin ZIP task is updated afterEvaluate and changes the ZIP name to match the plugin name
 afterEvaluate {
     ospackage {
-        packageName = "${name}"
+        packageName = "${project.name}"
         release = isSnapshot ? '0.1' : '1'
         version = "${project.version}" - "-SNAPSHOT"
 
@@ -170,7 +209,7 @@ afterEvaluate {
         license 'ASL-2.0'
         maintainer 'Timon Wong'
         url 'https://github.com/timonwong/elasticsearch-discovery-ecs'
-        summary 'Aliyun ECS discovery plugin for Elasticsearch'
+        summary "${project.description}"
     }
 
     buildRpm {
