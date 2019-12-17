@@ -122,28 +122,28 @@ public class EcsNetworkTests extends ESTestCase {
     /**
      * Test for network.host: _ecs:publicIp_
      */
-    public void testNetworkHostEc2PublicIp() throws IOException {
+    public void testNetworkHostEcsPublicIp() throws IOException {
         resolveEcs("_ecs:publicIp_", InetAddress.getByName("165.168.10.2"));
     }
 
     /**
      * Test for network.host: _ecs:privateIp_
      */
-    public void testNetworkHostEc2PrivateIp() throws IOException {
+    public void testNetworkHostEcsPrivateIp() throws IOException {
         resolveEcs("_ecs:privateIp_", InetAddress.getByName("127.0.0.1"));
     }
 
     /**
      * Test for network.host: _ecs:privateIpv4_
      */
-    public void testNetworkHostEc2PrivateIpv4() throws IOException {
+    public void testNetworkHostEcsPrivateIpv4() throws IOException {
         resolveEcs("_ecs:privateIpv4_", InetAddress.getByName("127.0.0.1"));
     }
 
     /**
      * Test for network.host: _ecs:publicIpv4_
      */
-    public void testNetworkHostEc2PublicIpv4() throws IOException {
+    public void testNetworkHostEcsPublicIpv4() throws IOException {
         resolveEcs("_ecs:publicIpv4_", InetAddress.getByName("165.168.10.2"));
     }
 
