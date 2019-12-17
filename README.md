@@ -14,6 +14,7 @@ Plugin version | ES version | Documentation
 2.3.4 | 2.3.x | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/2.x/README.md)
 6.8.5.0 | 6.8.5 | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/6.x/README.md)
 7.4.2.1 | 7.4.2 | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/7.4.x/README.md)
+7.5.0.0 | 7.5.0 |
 
 ## Build
 
