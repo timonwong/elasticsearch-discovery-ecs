@@ -13,16 +13,10 @@
  *   permissions and limitations under the License.
  */
 
-// Workaround for ES 7.5.0
-// https://github.com/elastic/elasticsearch/issues/49787#issuecomment-562704640
-// TODO(timonwong) Should be resolved in ES 7.5.1 :)
-import org.elasticsearch.gradle.testclusters.TestClustersRegistry
-import org.elasticsearch.gradle.testclusters.TestClustersPlugin
-
 buildscript {
 
     ext {
-        es_version = System.getProperty("es.version", "7.5.0")
+        es_version = System.getProperty("es.version", "7.5.1")
     }
 
     // This isn't applying from repositories.gradle so repeating it here
@@ -50,7 +44,7 @@ repositories {
 ext {
     projectSubstitutions = [:]
 
-    pluginVersion = '7.5.0'
+    pluginVersion = '7.5.1'
     isSnapshot = "true" == System.getProperty("build.snapshot", "true")
 
     licenseFile = rootProject.file('LICENSE.TXT')
@@ -200,17 +194,3 @@ afterEvaluate {
         tasks = ['build', 'buildRpm', 'buildDeb']
     }
 }
-
-// Workaround for ES 7.5.0
-// https://github.com/elastic/elasticsearch/issues/49787#issuecomment-562720655
-// TODO(timonwong) Should be resolved in ES 7.5.1 :)
-configurations.whenObjectAdded { c ->
-    if (c.name == 'elasticsearch_7.5.0_integ_test_zip_null') {
-        project.dependencies.add('elasticsearch_7.5.0_integ_test_zip_null', 'org.elasticsearch.distribution.integ-test-zip:elasticsearch:7.5.0@zip')
-    }
-}
-
-TestClustersRegistry registry = project.rootProject.extensions.create("testClustersRegistry", TestClustersRegistry)
-TestClustersPlugin.configureClaimClustersHook(project.gradle, registry)
-TestClustersPlugin.configureStartClustersHook(project.gradle, registry)
-TestClustersPlugin.configureStopClustersHook(project.gradle, registry)

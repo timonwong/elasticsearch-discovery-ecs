@@ -15,6 +15,7 @@ Plugin version | ES version | Documentation
 6.8.5.0 | 6.8.5 | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/6.x/README.md)
 7.4.2.1 | 7.4.2 | [Link](https://github.com/timonwong/elasticsearch-discovery-ecs/blob/7.4.x/README.md)
 7.5.0.0 | 7.5.0 |
+7.5.1.0 | 7.5.1 |
 
 ## Build
 
@@ -24,10 +25,10 @@ mvn package -P release
 
 ## Installation
 
-On Elasticsearch v7.5.0:
+On Elasticsearch v7.5.1:
 
 ```bash
-sudo bin/elasticsearch-plugin install -b https://github.com/timonwong/elasticsearch-discovery-ecs/releases/download/v7.5.0.0/elasticsearch-discovery-ecs-7.5.0.0.zip
+sudo bin/elasticsearch-plugin install -b https://github.com/timonwong/elasticsearch-discovery-ecs/releases/download/v7.5.1.0/elasticsearch-discovery-ecs-7.5.1.0.zip
 ```
 
 The plugin must be installed on every node in the cluster, and each node must be restarted after installation.
